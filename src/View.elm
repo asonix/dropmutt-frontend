@@ -30,48 +30,11 @@ import Route exposing (Route)
 {-| The main model for the application
 -}
 type alias PageModel =
-    { leftNav : LeftNav
-    , rightNav : List Link
-    , showNav : Bool
+    { header : Header
+    , nav : Nav
+    , footer : Footer
     , currentPage : PageModels
     }
-
-
-{-| Render a new page
--}
-loadPage : Route -> PageModel -> ( PageModel, Cmd Msg )
-loadPage route model =
-    let
-        mod_model =
-            { model | showNav = False }
-    in
-        case route of
-            Route.Home ->
-                case mod_model.currentPage of
-                    Home _ ->
-                        ( mod_model, Cmd.none )
-
-                    _ ->
-                        ( { mod_model | currentPage = Home Page.Home.init }, Cmd.none )
-
-            Route.One ->
-                case model.currentPage of
-                    One _ ->
-                        ( mod_model, Cmd.none )
-
-                    _ ->
-                        ( { mod_model | currentPage = One Page.One.init }, Cmd.none )
-
-            Route.NotFound ->
-                case model.currentPage of
-                    NotFound _ ->
-                        ( mod_model, Cmd.none )
-
-                    _ ->
-                        ( { mod_model | currentPage = NotFound Page.NotFound.init }, Cmd.none )
-
-            _ ->
-                ( mod_model, Route.modifyUrl Route.NotFound )
 
 
 {-| A union type between all the types of page models
@@ -82,9 +45,16 @@ type PageModels
     | NotFound NotFoundModel
 
 
-type alias LeftNav =
-    { homeLink : Link
-    , navLinks : List Link
+type alias Header =
+    Link
+
+
+type alias Nav =
+    List Link
+
+
+type alias Footer =
+    { tmp : String
     }
 
 
@@ -104,25 +74,21 @@ type alias Link =
 -}
 init : PageModel
 init =
-    { leftNav =
-        { homeLink =
-            { text = "Home Link"
-            , title = "The home page of the application"
-            , route = Route.Home
-            }
-        , navLinks =
-            [ { text = "Some Link Text"
-              , title = "Some really useful link"
-              , route = Route.One
-              }
-            , { text = "Some other text"
-              , title = "Another useful link"
-              , route = Route.Two
-              }
-            ]
+    { header =
+        { text = "Bubble letters maybe?"
+        , title = "The home page of the application"
+        , route = Route.Home
         }
-    , rightNav =
+    , nav =
         [ { text = "Some Link Text"
+          , title = "Some really useful link"
+          , route = Route.One
+          }
+        , { text = "Some other text"
+          , title = "Another useful link"
+          , route = Route.Two
+          }
+        , { text = "Some Link Text"
           , title = "Wow, so many links"
           , route = Route.Three
           }
@@ -131,45 +97,113 @@ init =
           , route = Route.Four
           }
         ]
-    , showNav = False
+    , footer =
+        { tmp = "copyright asonix 2018"
+        }
     , currentPage = Home Page.Home.init
     }
+
+
+{-| Render a new page
+-}
+loadPage : Route -> PageModel -> ( PageModel, Cmd Msg )
+loadPage route model =
+    case route of
+        Route.Home ->
+            case model.currentPage of
+                Home _ ->
+                    ( model, Cmd.none )
+
+                _ ->
+                    ( { model | currentPage = Home Page.Home.init }, Cmd.none )
+
+        Route.One ->
+            case model.currentPage of
+                One _ ->
+                    ( model, Cmd.none )
+
+                _ ->
+                    ( { model | currentPage = One Page.One.init }, Cmd.none )
+
+        Route.NotFound ->
+            case model.currentPage of
+                NotFound _ ->
+                    ( model, Cmd.none )
+
+                _ ->
+                    ( { model | currentPage = NotFound Page.NotFound.init }, Cmd.none )
+
+        _ ->
+            ( model, Route.modifyUrl Route.NotFound )
 
 
 {-| The main application layout
 -}
 layout : PageModel -> Html Msg
 layout model =
-    let
-        page =
-            case model.currentPage of
-                Home homeModel ->
-                    Page.Home.view homeModel
-
-                One oneModel ->
-                    Page.One.view oneModel
-
-                NotFound notFoundModel ->
-                    Page.NotFound.view notFoundModel
-    in
-        div
+    div
+        [ css
+            [ backgroundColor lightGrey
+            , fontFamily sansSerif
+            , color black
+            , margin (px 0)
+            , padding2 (px 0) (Css.em 1)
+            , boxSizing borderBox
+            , position absolute
+            , top (px 0)
+            , left (px 0)
+            , minWidth (pct 100)
+            , minHeight (vh 100)
+            ]
+        ]
+        [ div
             [ css
-                [ backgroundColor white
-                , fontFamily sansSerif
-                , color black
-                , margin (px 0)
-                , padding (px 0)
-                , position absolute
-                , top (px 0)
-                , left (px 0)
-                , width (pct 100)
-                , minHeight (vh 100)
+                [ maxWidth (px 900)
+                , minWidth (px 620)
+                , margin2 (px 0) auto
+                , marginTop (Css.em 4)
                 ]
             ]
-            [ ourNav model
-            , page
-            , ourFooter model
+            [ headerView model.header
+            , navView model.nav
+            , pageView model.currentPage
+            , footerView model.footer
             ]
+        ]
+
+
+darkShadow : Style
+darkShadow =
+    boxShadow4 (px 0) (px 3) (px 4) darkGrey
+
+
+lightShadow : Style
+lightShadow =
+    boxShadow4 (px 0) (px 3) (px 4) grey
+
+
+pageView : PageModels -> Html Msg
+pageView model =
+    div
+        [ css
+            [ backgroundColor white
+            , color black
+            , padding (Css.em 2)
+            , margin2 (Css.em 2) (px 0)
+            , borderRadius (px 8)
+            , lightShadow
+            ]
+        ]
+        [ case model of
+            Home homeModel ->
+                Page.Home.view homeModel
+
+            One oneModel ->
+                Page.One.view oneModel
+
+            NotFound notFoundModel ->
+                Page.NotFound.view notFoundModel
+        ]
 
 
 mobileWidth : Px
@@ -177,130 +211,56 @@ mobileWidth =
     px 900
 
 
-ourNav : PageModel -> Html Msg
-ourNav model =
+headerView : Header -> Html Msg
+headerView model =
+    header
+        [ css [ textAlign center ] ]
+        [ h1 []
+            [ a
+                [ Route.href model.route
+                , navLinkOnClick model
+                , title model.title
+                , css
+                    [ color black
+                    , textDecoration none
+                    , hover [ color gray ]
+                    , active [ color gray ]
+                    ]
+                ]
+                [ text model.text ]
+            ]
+        ]
+
+
+navView : Nav -> Html Msg
+navView model =
     let
         startIndex =
-            if model.showNav then
-                2
-            else
-                1
+            1
 
-        ( end, leftNav ) =
-            model.leftNav.navLinks
+        ( _, navContent ) =
+            model
                 |> addListIndex (startIndex + 1)
-                |> Tuple.mapSecond
-                    (navList
-                        << (::) (navItem homeLinkCss ( startIndex, model.leftNav.homeLink ))
-                        << mapLinks
-                    )
-
-        ( _, rightNav ) =
-            model.rightNav
-                |> addListIndex end
                 |> Tuple.mapSecond (navList << mapLinks)
 
         navHeight =
             Css.em 4
     in
-        header []
-            [ div
-                [ css
-                    [ height navHeight
-                    , withMedia
-                        [ Css.Media.all [ Css.Media.maxWidth mobileWidth ] ]
-                        [ padding (Css.em 2)
-                        , height auto
-                        ]
-                    ]
-                ]
-                [ text "tmp" ]
-            , div
-                [ css
-                    (if model.showNav then
-                        [ withMedia
-                            [ Css.Media.all [ Css.Media.maxWidth mobileWidth ] ]
-                            [ minHeight (pct 100)
-                            , maxHeight (pct 100)
-                            , overflow auto
-                            ]
-                        ]
-                     else
-                        []
-                    )
-                , css
-                    [ position fixed
-                    , top (px 0)
-                    , left (px 0)
-                    , width (pct 100)
-                    , backgroundColor black
-                    , color white
-                    , zIndex (int 1)
-                    ]
-                ]
-                [ div
-                    [ css
-                        [ display none
-                        , withMedia
-                            [ Css.Media.all [ Css.Media.maxWidth mobileWidth ] ]
-                            [ display block
-                            ]
-                        ]
-                    ]
-                    [ a
-                        [ toggleNav model
-                        , tabindex 1
-                        , Html.Styled.Attributes.href "#"
-                        , css navLinkCss
-                        , css [ color white ]
-                        ]
-                        [ div
-                            [ css
-                                (if model.showNav then
-                                    navHover
-                                 else
-                                    []
-                                )
-                            , css
-                                [ padding (Css.em 2)
-                                ]
-                            ]
-                            [ if model.showNav then
-                                text "Hide Navigation"
-                              else
-                                text "Navigation"
-                            ]
-                        ]
-                    ]
-                , nav
-                    [ css
-                        [ withMedia
-                            [ Css.Media.all [ Css.Media.maxWidth mobileWidth ] ]
-                            [ position relative
-                            , flexDirection column
-                            , justifyContent top
-                            , height auto
-                            , if model.showNav then
-                                displayFlex
-                              else
-                                display none
-                            ]
-                        , position fixed
-                        , height navHeight
-                        , top (px 0)
-                        , left (px 0)
-                        , backgroundColor black
-                        , color white
-                        , flexDirection row
-                        , justifyContent spaceBetween
-                        , backgroundColor black
-                        , displayFlex
-                        , width (pct 100)
-                        ]
-                    ]
-                    [ leftNav, rightNav ]
+        nav
+            [ css
+                [ height navHeight
+                , backgroundColor black
+                , color white
+                , flexDirection row
+                , justifyContent left
+                , backgroundColor black
+                , displayFlex
+                , width (pct 100)
+                , borderRadius (px 8)
+                , darkShadow
                 ]
             ]
+            [ navContent ]
 
 
 navList : List (Html Msg) -> Html Msg
@@ -310,17 +270,13 @@ navList links =
     else
         ul
             [ css
-                [ withMedia
-                    [ Css.Media.all [ Css.Media.maxWidth mobileWidth ] ]
-                    [ width (pct 100)
-                    , flexDirection column
-                    ]
-                , padding (px 0)
+                [ padding (px 0)
                 , textDecoration none
                 , displayFlex
-                , justifyContent flexStart
+                , justifyContent spaceAround
                 , flexDirection row
                 , margin (px 0)
+                , width (pct 100)
                 , height (pct 100)
                 ]
             ]
@@ -347,7 +303,24 @@ mapLinks =
 navItem : List Style -> ( Int, Link ) -> Html Msg
 navItem styles ( index, link ) =
     li
-        [ css [ display inlineBlock ] ]
+        [ css
+            [ display inlineBlock
+            , width (pct 100)
+            , textAlign center
+            , lastChild [ borderRadius4 (px 0) (px 8) (px 8) (px 0) ]
+            , firstChild [ borderRadius4 (px 8) (px 0) (px 0) (px 8) ]
+            , active navHover
+            , hover navHover
+            , focus
+                (navHover
+                    ++ [ borderColor lightGrey
+                       , borderWidth (px 1)
+                       , borderStyle solid
+                       , margin (px -1)
+                       ]
+                )
+            ]
+        ]
         [ a
             [ css styles
             , Route.href link.route
@@ -356,14 +329,7 @@ navItem styles ( index, link ) =
             , navLinkOnClick link
             ]
             [ div
-                [ css
-                    [ withMedia
-                        [ Css.Media.all [ Css.Media.maxWidth mobileWidth ] ]
-                        [ padding (Css.em 2) ]
-                    , cursor pointer
-                    , padding2 (px 0) (Css.em 2)
-                    ]
-                ]
+                [ css [ cursor pointer ] ]
                 [ text link.text ]
             ]
         ]
@@ -377,16 +343,6 @@ navLinkOnClick link =
         , preventDefault = True
         }
         (Json.Decode.succeed <| Load link.route)
-
-
-toggleNav : PageModel -> Attribute Msg
-toggleNav model =
-    onWithOptions
-        "click"
-        { stopPropagation = False
-        , preventDefault = True
-        }
-        (Json.Decode.succeed <| (Page <| Layout <| ShowNav (not model.showNav)))
 
 
 navHover : List Style
@@ -405,19 +361,6 @@ navLinkCss =
     , width (pct 100)
     , textDecoration none
     , cursor pointer
-    , focus
-        (navHover
-            ++ [ withMedia
-                    [ Css.Media.all [ Css.Media.minWidth mobileWidth ] ]
-                    [ borderColor lightGrey
-                    , borderWidth (px 1)
-                    , borderStyle solid
-                    , margin (px -1)
-                    ]
-               ]
-        )
-    , active navHover
-    , hover navHover
     ]
 
 
@@ -438,28 +381,25 @@ homeLinkCss =
     (fontWeight (int 600)) :: navLinkCss ++ homeNavColors
 
 
-footerHeight : Em
-footerHeight =
-    Css.em 6
-
-
-ourFooter : PageModel -> Html Msg
-ourFooter _ =
-    div []
-        [ div [ css [ height footerHeight ] ] []
-        , footer
+footerView : Footer -> Html Msg
+footerView model =
+    footer
+        [ css
+            [ width (pct 100)
+            , color white
+            , backgroundColor black
+            , borderRadius (px 8)
+            , darkShadow
+            ]
+        ]
+        [ p
             [ css
-                [ height footerHeight
-                , position absolute
-                , bottom (px 0)
-                , left (px 0)
-                , width (pct 100)
-                , color white
-                , backgroundColor gray
+                [ margin (px 0)
+                , padding (Css.em 2)
+                , textAlign center
                 ]
             ]
-            [ p [] [ text "tmp" ]
-            ]
+            [ text model.tmp ]
         ]
 
 
@@ -467,6 +407,4 @@ ourFooter _ =
 -}
 update : LayoutMessage -> PageModel -> ( PageModel, Cmd msg )
 update msg model =
-    case msg of
-        ShowNav shown ->
-            ( { model | showNav = shown }, Cmd.none )
+    ( model, Cmd.none )

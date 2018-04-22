@@ -1,10 +1,13 @@
-module Colors exposing (white, lightGrey, grey, gray, darkGray, black)
+module Colors exposing (white, lightGrey, grey, darkGrey, lightGray, gray, darkGray, black)
 
 {-| Defines the colors used in this application
 
 @docs white
 @docs lightGrey
 @docs grey
+@docs darkGrey
+@docs lightGray
+@docs gray
 @docs darkGray
 @docs black
 
@@ -32,6 +35,20 @@ lightGrey =
 grey : Color
 grey =
     rgb 229 229 229
+
+
+{-| darkGray
+-}
+darkGrey : Color
+darkGrey =
+    rgb 184 184 184
+
+
+{-| lightGray
+-}
+lightGray : Color
+lightGray =
+    rgb 112 112 112
 
 
 {-| gray
