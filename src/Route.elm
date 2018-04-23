@@ -26,7 +26,7 @@ type Route
     = Home
     | One
     | Two
-    | Three
+    | Gallery
     | Four
     | NotFound
 
@@ -37,7 +37,7 @@ route =
         [ UrlParser.map Home (UrlParser.s "")
         , UrlParser.map One (UrlParser.s "one")
         , UrlParser.map Two (UrlParser.s "two")
-        , UrlParser.map Three (UrlParser.s "three")
+        , UrlParser.map Gallery (UrlParser.s "gallery")
         , UrlParser.map Four (UrlParser.s "four")
         , UrlParser.map NotFound (UrlParser.s "404")
         ]
@@ -57,8 +57,8 @@ routeToString route =
                 Two ->
                     [ "two" ]
 
-                Three ->
-                    [ "three" ]
+                Gallery ->
+                    [ "gallery" ]
 
                 Four ->
                     [ "four" ]

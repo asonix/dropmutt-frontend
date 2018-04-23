@@ -1,4 +1,4 @@
-module Message exposing (Msg(..), PageMessage(..), LayoutMessage(..))
+module Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..))
 
 {-| Define the Msg type and related methods
 
@@ -6,6 +6,7 @@ module Message exposing (Msg(..), PageMessage(..), LayoutMessage(..))
 
 -}
 
+import ImageFile exposing (ImageFile)
 import Route exposing (Route)
 
 
@@ -20,10 +21,18 @@ type Msg
 {-| The Msg type for the pages
 -}
 type PageMessage
-    = Layout LayoutMessage
+    = LayoutMsg LayoutMessage
+    | GalleryMsg GalleryMessage
 
 
 {-| The Msg type for the main layout
 -}
 type LayoutMessage
     = ShowNav Bool
+
+
+{-| The Msg type for the Image gallery
+-}
+type GalleryMessage
+    = ViewImage ImageFile
+    | HideImage

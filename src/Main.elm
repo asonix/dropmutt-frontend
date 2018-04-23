@@ -67,11 +67,9 @@ update msg model =
             ( model, Route.modifyUrl route )
 
         Page msg ->
-            case msg of
-                Layout layoutMsg ->
-                    model.page
-                        |> View.update layoutMsg
-                        |> Tuple.mapFirst (\pageModel -> { model | page = pageModel })
+            model.page
+                |> View.update msg
+                |> Tuple.mapFirst (\pageModel -> { model | page = pageModel })
 
 
 

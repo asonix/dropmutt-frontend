@@ -20,9 +20,10 @@ import Html.Styled.Events exposing (onCheck, onWithOptions)
 import Json.Decode
 import Task exposing (perform)
 import Colors exposing (..)
-import Message exposing (Msg(..), PageMessage(..), LayoutMessage(..))
+import Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..))
 import Page.Home exposing (HomeModel)
 import Page.One exposing (OneModel)
+import Page.Gallery exposing (GalleryModel)
 import Page.NotFound exposing (NotFoundModel)
 import Route exposing (Route)
 
@@ -42,6 +43,7 @@ type alias PageModel =
 type PageModels
     = Home HomeModel
     | One OneModel
+    | Gallery GalleryModel
     | NotFound NotFoundModel
 
 
@@ -88,9 +90,9 @@ init =
           , title = "Another useful link"
           , route = Route.Two
           }
-        , { text = "Some Link Text"
-          , title = "Wow, so many links"
-          , route = Route.Three
+        , { text = "Gallery"
+          , title = "View the image gallery"
+          , route = Route.Gallery
           }
         , { text = "Some other text"
           , title = "Incredible!! another link"
@@ -125,6 +127,14 @@ loadPage route model =
                 _ ->
                     ( { model | currentPage = One Page.One.init }, Cmd.none )
 
+        Route.Gallery ->
+            case model.currentPage of
+                Gallery _ ->
+                    ( model, Cmd.none )
+
+                _ ->
+                    ( { model | currentPage = Gallery Page.Gallery.init }, Cmd.none )
+
         Route.NotFound ->
             case model.currentPage of
                 NotFound _ ->
@@ -154,14 +164,16 @@ layout model =
             , left (px 0)
             , minWidth (pct 100)
             , minHeight (vh 100)
+            , withMedia
+                [ Css.Media.all [ Css.Media.maxWidth (px 650) ] ]
+                [ padding (px 0) ]
             ]
         ]
         [ div
             [ css
                 [ maxWidth (px 900)
                 , minWidth (px 620)
-                , margin2 (px 0) auto
-                , marginTop (Css.em 4)
+                , margin2 (Css.em 4) auto
                 ]
             ]
             [ headerView model.header
@@ -200,6 +212,9 @@ pageView model =
 
             One oneModel ->
                 Page.One.view oneModel
+
+            Gallery galleryModel ->
+                Page.Gallery.view galleryModel
 
             NotFound notFoundModel ->
                 Page.NotFound.view notFoundModel
@@ -405,6 +420,18 @@ footerView model =
 
 {-| Update the state of the layout
 -}
-update : LayoutMessage -> PageModel -> ( PageModel, Cmd msg )
+update : PageMessage -> PageModel -> ( PageModel, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        LayoutMsg layoutMsg ->
+            ( model, Cmd.none )
+
+        GalleryMsg galleryMsg ->
+            case model.currentPage of
+                Gallery galleryModel ->
+                    galleryModel
+                        |> Page.Gallery.update galleryMsg
+                        |> Tuple.mapFirst (\x -> { model | currentPage = Gallery x })
+
+                _ ->
+                    ( model, Cmd.none )
