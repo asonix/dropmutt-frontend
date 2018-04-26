@@ -27,7 +27,7 @@ type Route
     | One
     | Two
     | Gallery
-    | Four
+    | Auth
     | NotFound
 
 
@@ -38,7 +38,7 @@ route =
         , UrlParser.map One (UrlParser.s "one")
         , UrlParser.map Two (UrlParser.s "two")
         , UrlParser.map Gallery (UrlParser.s "gallery")
-        , UrlParser.map Four (UrlParser.s "four")
+        , UrlParser.map Auth (UrlParser.s "auth")
         , UrlParser.map NotFound (UrlParser.s "404")
         ]
 
@@ -60,8 +60,8 @@ routeToString route =
                 Gallery ->
                     [ "gallery" ]
 
-                Four ->
-                    [ "four" ]
+                Auth ->
+                    [ "auth" ]
 
                 NotFound ->
                     [ "404" ]

@@ -24,8 +24,10 @@ import Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleryMes
 import Page.Home exposing (HomeModel)
 import Page.One exposing (OneModel)
 import Page.Gallery exposing (GalleryModel)
+import Page.Auth exposing (AuthModel)
 import Page.NotFound exposing (NotFoundModel)
 import Route exposing (Route)
+import Session exposing (Session)
 
 
 {-| The main model for the application
@@ -44,6 +46,7 @@ type PageModels
     = Home HomeModel
     | One OneModel
     | Gallery GalleryModel
+    | Auth AuthModel
     | NotFound NotFoundModel
 
 
@@ -52,7 +55,9 @@ type alias Header =
 
 
 type alias Nav =
-    List Link
+    { nav : List Link
+    , auth : Link
+    }
 
 
 type alias Footer =
@@ -82,23 +87,26 @@ init =
         , route = Route.Home
         }
     , nav =
-        [ { text = "Some Link Text"
-          , title = "Some really useful link"
-          , route = Route.One
-          }
-        , { text = "Some other text"
-          , title = "Another useful link"
-          , route = Route.Two
-          }
-        , { text = "Gallery"
-          , title = "View the image gallery"
-          , route = Route.Gallery
-          }
-        , { text = "Some other text"
-          , title = "Incredible!! another link"
-          , route = Route.Four
-          }
-        ]
+        { nav =
+            [ { text = "Some Link Text"
+              , title = "Some really useful link"
+              , route = Route.One
+              }
+            , { text = "Some other text"
+              , title = "Another useful link"
+              , route = Route.Two
+              }
+            , { text = "Gallery"
+              , title = "View the image gallery"
+              , route = Route.Gallery
+              }
+            ]
+        , auth =
+            { text = "Auth"
+            , title = "Note: Admins only. Administer the website"
+            , route = Route.Auth
+            }
+        }
     , footer =
         { tmp = "copyright asonix 2018"
         }
@@ -135,6 +143,14 @@ loadPage route model =
                 _ ->
                     ( { model | currentPage = Gallery Page.Gallery.init }, Cmd.none )
 
+        Route.Auth ->
+            case model.currentPage of
+                Auth _ ->
+                    ( model, Cmd.none )
+
+                _ ->
+                    ( { model | currentPage = Auth Page.Auth.init }, Cmd.none )
+
         Route.NotFound ->
             case model.currentPage of
                 NotFound _ ->
@@ -149,8 +165,8 @@ loadPage route model =
 
 {-| The main application layout
 -}
-layout : PageModel -> Html Msg
-layout model =
+layout : Session -> PageModel -> Html Msg
+layout session model =
     div
         [ css
             [ backgroundColor lightGrey
@@ -177,7 +193,7 @@ layout model =
                 ]
             ]
             [ headerView model.header
-            , navView model.nav
+            , navView session model.nav
             , pageView model.currentPage
             , footerView model.footer
             ]
@@ -216,6 +232,9 @@ pageView model =
             Gallery galleryModel ->
                 Page.Gallery.view galleryModel
 
+            Auth authModel ->
+                Page.Auth.view authModel
+
             NotFound notFoundModel ->
                 Page.NotFound.view notFoundModel
         ]
@@ -247,16 +266,29 @@ headerView model =
         ]
 
 
-navView : Nav -> Html Msg
-navView model =
+navView : Session -> Nav -> Html Msg
+navView session model =
     let
         startIndex =
             1
 
-        ( _, navContent ) =
-            model
+        ( end, navIntermediate ) =
+            model.nav
                 |> addListIndex (startIndex + 1)
-                |> Tuple.mapSecond (navList << mapLinks)
+
+        navContent =
+            navIntermediate
+                |> mapLinks
+                |> handleAuth end
+                |> navList
+
+        handleAuth index list =
+            case session of
+                Session.LoggedOut ->
+                    list ++ mapLinks [ ( index, model.auth ) ]
+
+                Session.LoggedIn ->
+                    list
 
         navHeight =
             Css.em 4
@@ -420,11 +452,11 @@ footerView model =
 
 {-| Update the state of the layout
 -}
-update : PageMessage -> PageModel -> ( PageModel, Cmd Msg )
-update msg model =
+update : PageMessage -> Session -> PageModel -> ( ( PageModel, Cmd Msg ), Session )
+update msg session model =
     case msg of
         LayoutMsg layoutMsg ->
-            ( model, Cmd.none )
+            ( ( model, Cmd.none ), session )
 
         GalleryMsg galleryMsg ->
             case model.currentPage of
@@ -432,6 +464,17 @@ update msg model =
                     galleryModel
                         |> Page.Gallery.update galleryMsg
                         |> Tuple.mapFirst (\x -> { model | currentPage = Gallery x })
+                        |> (\x -> ( x, session ))
 
                 _ ->
-                    ( model, Cmd.none )
+                    ( ( model, Cmd.none ), session )
+
+        AuthMsg authMsg ->
+            case model.currentPage of
+                Auth authModel ->
+                    authModel
+                        |> Page.Auth.update authMsg session
+                        |> Tuple.mapFirst (Tuple.mapFirst (\x -> { model | currentPage = Auth x }))
+
+                _ ->
+                    ( ( model, Cmd.none ), session )

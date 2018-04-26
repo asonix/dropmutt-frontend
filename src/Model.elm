@@ -10,6 +10,7 @@ module Model exposing (Model, init, loadPage)
 
 import Message exposing (Msg)
 import Route exposing (Route)
+import Session exposing (Session(..))
 import View exposing (PageModel)
 
 
@@ -17,6 +18,7 @@ import View exposing (PageModel)
 -}
 type alias Model =
     { page : PageModel
+    , session : Session
     }
 
 
@@ -25,6 +27,7 @@ type alias Model =
 init : Model
 init =
     { page = View.init
+    , session = LoggedOut
     }
 
 

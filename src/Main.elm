@@ -49,7 +49,7 @@ init location =
 view : Model -> Html Msg
 view model =
     model.page
-        |> View.layout
+        |> View.layout model.session
         |> Html.Styled.toUnstyled
 
 
@@ -67,9 +67,8 @@ update msg model =
             ( model, Route.modifyUrl route )
 
         Page msg ->
-            model.page
-                |> View.update msg
-                |> Tuple.mapFirst (\pageModel -> { model | page = pageModel })
+            View.update msg model.session model.page
+                |> (\( ( page, cmd ), session ) -> ( { model | page = page, session = session }, cmd ))
 
 
 

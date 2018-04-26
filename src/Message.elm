@@ -1,4 +1,4 @@
-module Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..))
+module Message exposing (Msg(..), AuthMessage(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..))
 
 {-| Define the Msg type and related methods
 
@@ -23,6 +23,20 @@ type Msg
 type PageMessage
     = LayoutMsg LayoutMessage
     | GalleryMsg GalleryMessage
+    | AuthMsg AuthMessage
+
+
+{-| The Msg type for authentication
+-}
+type AuthMessage
+    = Login
+    | Signup
+    | Logout
+    | Username String
+    | Password String
+    | Authenticated
+    | NotAuthenticated
+    | SwitchAuth
 
 
 {-| The Msg type for the main layout
