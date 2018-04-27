@@ -16,6 +16,7 @@ type Msg
     = Render Route
     | Load Route
     | Page PageMessage
+    | Logout
 
 
 {-| The Msg type for the pages
@@ -31,7 +32,6 @@ type PageMessage
 type AuthMessage
     = Login
     | Signup
-    | Logout
     | Username String
     | Password String
     | Authenticated

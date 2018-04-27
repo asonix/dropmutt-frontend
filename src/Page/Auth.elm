@@ -15,6 +15,7 @@ import Html.Styled.Events exposing (onSubmit, onInput, onClick)
 import Http
 import Json.Decode
 import Json.Encode
+import Auth exposing (..)
 import Message exposing (Msg(..), PageMessage(..), AuthMessage(..))
 import Route exposing (Route(..))
 import Session exposing (Session(..))
@@ -136,37 +137,14 @@ formOnSubmit authType =
         onSubmit msg
 
 
-apiEndpoint : String
-apiEndpoint =
-    "http://localhost:8080/api/v1"
-
-
-loginUrl : String
-loginUrl =
-    apiEndpoint ++ "/login"
-
-
-signupUrl : String
-signupUrl =
-    apiEndpoint ++ "/signup"
-
-
-logoutUrl : String
-logoutUrl =
-    apiEndpoint ++ "/logout"
-
-
 update : AuthMessage -> Session -> AuthModel -> ( ( AuthModel, Cmd Msg ), Session )
 update msg session model =
     case msg of
         Login ->
-            ( ( model, authRequest loginUrl model ), session )
+            ( ( model, authRequest loginUrl (newAuthParams model.username model.password) ), session )
 
         Signup ->
-            ( ( model, authRequest signupUrl model ), session )
-
-        Logout ->
-            ( ( model, Cmd.none ), session )
+            ( ( model, authRequest signupUrl (newAuthParams model.username model.password) ), session )
 
         Username username ->
             ( ( { model | username = username }, Cmd.none ), session )
@@ -192,49 +170,3 @@ switchAuth model =
 
         SignUp ->
             { model | authType = LogIn }
-
-
-logoutRequest : Cmd Msg
-logoutRequest =
-    let
-        handleResponse res =
-            case res of
-                Ok a ->
-                    Page <| AuthMsg <| NotAuthenticated
-
-                Err e ->
-                    Page <| AuthMsg <| Authenticated
-    in
-        Http.get logoutUrl (Json.Decode.succeed 0)
-            |> Http.send handleResponse
-
-
-authPayload : AuthModel -> Http.Body
-authPayload model =
-    Json.Encode.object
-        [ ( "username", Json.Encode.string model.username )
-        , ( "password", Json.Encode.string model.password )
-        ]
-        |> Http.jsonBody
-
-
-authRequest : String -> AuthModel -> Cmd Msg
-authRequest url model =
-    let
-        body =
-            authPayload model
-
-        request =
-            Http.post (Debug.log "Querying url" url) body (Json.Decode.succeed 0)
-
-        handleResponse res =
-            case Debug.log "HTTP Response" res of
-                Ok a ->
-                    Page <| AuthMsg <| Authenticated
-
-                Err error ->
-                    Page <|
-                        AuthMsg <|
-                            NotAuthenticated
-    in
-        Http.send handleResponse request

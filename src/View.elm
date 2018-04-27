@@ -57,6 +57,7 @@ type alias Header =
 type alias Nav =
     { nav : List Link
     , auth : Link
+    , logout : Link
     }
 
 
@@ -73,8 +74,14 @@ This type cannot link to pages outside of the application
 type alias Link =
     { text : String
     , title : String
-    , route : Route
+    , kind : LinkKind
     }
+
+
+type LinkKind
+    = ToRoute Route
+    | ToAction Msg
+    | ToHref String
 
 
 {-| Initialize the base state of the layout
@@ -84,27 +91,32 @@ init =
     { header =
         { text = "Bubble letters maybe?"
         , title = "The home page of the application"
-        , route = Route.Home
+        , kind = ToRoute Route.Home
         }
     , nav =
         { nav =
             [ { text = "Some Link Text"
               , title = "Some really useful link"
-              , route = Route.One
+              , kind = ToRoute Route.One
               }
             , { text = "Some other text"
               , title = "Another useful link"
-              , route = Route.Two
+              , kind = ToRoute Route.Two
               }
             , { text = "Gallery"
               , title = "View the image gallery"
-              , route = Route.Gallery
+              , kind = ToRoute Route.Gallery
               }
             ]
         , auth =
             { text = "Auth"
             , title = "Note: Admins only. Administer the website"
-            , route = Route.Auth
+            , kind = ToRoute Route.Auth
+            }
+        , logout =
+            { text = "Logout"
+            , title = "Log out"
+            , kind = ToAction Logout
             }
         }
     , footer =
@@ -246,22 +258,22 @@ mobileWidth =
 
 
 headerView : Header -> Html Msg
-headerView model =
+headerView link =
     header
         [ css [ textAlign center ] ]
         [ h1 []
             [ a
-                [ Route.href model.route
-                , navLinkOnClick model
-                , title model.title
-                , css
+                ([ title link.title
+                 , css
                     [ color black
                     , textDecoration none
                     , hover [ color gray ]
                     , active [ color gray ]
                     ]
-                ]
-                [ text model.text ]
+                 ]
+                    ++ linkKindAttribute link.kind
+                )
+                [ text link.text ]
             ]
         ]
 
@@ -288,7 +300,7 @@ navView session model =
                     list ++ mapLinks [ ( index, model.auth ) ]
 
                 Session.LoggedIn ->
-                    list
+                    list ++ mapLinks [ ( index, model.logout ) ]
 
         navHeight =
             Css.em 4
@@ -347,6 +359,23 @@ mapLinks =
     List.map (navItem (defaultNavColors ++ navLinkCss))
 
 
+linkKindAttribute : LinkKind -> List (Attribute Msg)
+linkKindAttribute kind =
+    case kind of
+        ToRoute route ->
+            [ Route.href route
+            , navLinkOnClick route
+            ]
+
+        ToAction action ->
+            [ Html.Styled.Attributes.href "#"
+            , actionLinkOnClick action
+            ]
+
+        ToHref href ->
+            [ Html.Styled.Attributes.href href ]
+
+
 navItem : List Style -> ( Int, Link ) -> Html Msg
 navItem styles ( index, link ) =
     li
@@ -369,12 +398,12 @@ navItem styles ( index, link ) =
             ]
         ]
         [ a
-            [ css styles
-            , Route.href link.route
-            , tabindex index
-            , title link.title
-            , navLinkOnClick link
-            ]
+            ([ css styles
+             , tabindex index
+             , title link.title
+             ]
+                ++ linkKindAttribute link.kind
+            )
             [ div
                 [ css [ cursor pointer ] ]
                 [ text link.text ]
@@ -382,14 +411,24 @@ navItem styles ( index, link ) =
         ]
 
 
-navLinkOnClick : Link -> Attribute Msg
-navLinkOnClick link =
+actionLinkOnClick : Msg -> Attribute Msg
+actionLinkOnClick action =
     onWithOptions
         "click"
         { stopPropagation = False
         , preventDefault = True
         }
-        (Json.Decode.succeed <| Load link.route)
+        (Json.Decode.succeed <| action)
+
+
+navLinkOnClick : Route -> Attribute Msg
+navLinkOnClick route =
+    onWithOptions
+        "click"
+        { stopPropagation = False
+        , preventDefault = True
+        }
+        (Json.Decode.succeed <| Load route)
 
 
 navHover : List Style

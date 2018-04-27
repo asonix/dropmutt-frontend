@@ -12,9 +12,11 @@ module Main exposing (main)
 import Html exposing (Html)
 import Html.Styled
 import Navigation exposing (Location, program)
+import Auth exposing (logoutRequest)
 import Message exposing (Msg(..), PageMessage(..))
 import Model exposing (Model)
 import Route exposing (Route)
+import Session exposing (Session)
 import View
 
 
@@ -69,6 +71,9 @@ update msg model =
         Page msg ->
             View.update msg model.session model.page
                 |> (\( ( page, cmd ), session ) -> ( { model | page = page, session = session }, cmd ))
+
+        Logout ->
+            ( { model | session = Session.LoggedOut }, logoutRequest )
 
 
 
