@@ -22,7 +22,7 @@ import Task exposing (perform)
 import Colors exposing (..)
 import Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..))
 import Page.Home exposing (HomeModel)
-import Page.One exposing (OneModel)
+import Page.Admin exposing (AdminModel)
 import Page.Gallery exposing (GalleryModel)
 import Page.Auth exposing (AuthModel)
 import Page.NotFound exposing (NotFoundModel)
@@ -44,7 +44,7 @@ type alias PageModel =
 -}
 type PageModels
     = Home HomeModel
-    | One OneModel
+    | Admin AdminModel
     | Gallery GalleryModel
     | Auth AuthModel
     | NotFound NotFoundModel
@@ -56,8 +56,8 @@ type alias Header =
 
 type alias Nav =
     { nav : List Link
-    , auth : Link
-    , logout : Link
+    , loggedOut : List Link
+    , loggedIn : List Link
     }
 
 
@@ -95,11 +95,7 @@ init =
         }
     , nav =
         { nav =
-            [ { text = "Some Link Text"
-              , title = "Some really useful link"
-              , kind = ToRoute Route.One
-              }
-            , { text = "Some other text"
+            [ { text = "Some other text"
               , title = "Another useful link"
               , kind = ToRoute Route.Two
               }
@@ -108,16 +104,22 @@ init =
               , kind = ToRoute Route.Gallery
               }
             ]
-        , auth =
-            { text = "Auth"
-            , title = "Note: Admins only. Administer the website"
-            , kind = ToRoute Route.Auth
-            }
-        , logout =
-            { text = "Logout"
-            , title = "Log out"
-            , kind = ToAction Logout
-            }
+        , loggedOut =
+            [ { text = "Auth"
+              , title = "Note: Admins only. Administer the website"
+              , kind = ToRoute Route.Auth
+              }
+            ]
+        , loggedIn =
+            [ { text = "Administration"
+              , title = "Upload files and such"
+              , kind = ToRoute Route.Admin
+              }
+            , { text = "Logout"
+              , title = "Log out"
+              , kind = ToAction LogoutMsg
+              }
+            ]
         }
     , footer =
         { tmp = "copyright asonix 2018"
@@ -139,13 +141,13 @@ loadPage route model =
                 _ ->
                     ( { model | currentPage = Home Page.Home.init }, Cmd.none )
 
-        Route.One ->
+        Route.Admin ->
             case model.currentPage of
-                One _ ->
+                Admin _ ->
                     ( model, Cmd.none )
 
                 _ ->
-                    ( { model | currentPage = One Page.One.init }, Cmd.none )
+                    ( { model | currentPage = Admin Page.Admin.init }, Cmd.none )
 
         Route.Gallery ->
             case model.currentPage of
@@ -238,8 +240,8 @@ pageView model =
             Home homeModel ->
                 Page.Home.view homeModel
 
-            One oneModel ->
-                Page.One.view oneModel
+            Admin oneModel ->
+                Page.Admin.view oneModel
 
             Gallery galleryModel ->
                 Page.Gallery.view galleryModel
@@ -288,19 +290,21 @@ navView session model =
             model.nav
                 |> addListIndex (startIndex + 1)
 
-        navContent =
-            navIntermediate
-                |> mapLinks
-                |> handleAuth end
-                |> navList
-
-        handleAuth index list =
-            case session of
+        ( newEnd, navAuth ) =
+            (case session of
                 Session.LoggedOut ->
-                    list ++ mapLinks [ ( index, model.auth ) ]
+                    model.loggedOut
 
                 Session.LoggedIn ->
-                    list ++ mapLinks [ ( index, model.logout ) ]
+                    model.loggedIn
+            )
+                |> addListIndex end
+
+        navContent =
+            navAuth
+                |> (++) navIntermediate
+                |> mapLinks
+                |> navList
 
         navHeight =
             Css.em 4
@@ -514,6 +518,17 @@ update msg session model =
                     authModel
                         |> Page.Auth.update authMsg session
                         |> Tuple.mapFirst (Tuple.mapFirst (\x -> { model | currentPage = Auth x }))
+
+                _ ->
+                    ( ( model, Cmd.none ), session )
+
+        AdminMsg adminMsg ->
+            case model.currentPage of
+                Admin adminModel ->
+                    adminModel
+                        |> Page.Admin.update adminMsg
+                        |> Tuple.mapFirst (\x -> { model | currentPage = Admin x })
+                        |> (\x -> ( x, session ))
 
                 _ ->
                     ( ( model, Cmd.none ), session )

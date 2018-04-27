@@ -12,9 +12,10 @@ module Main exposing (main)
 import Html exposing (Html)
 import Html.Styled
 import Navigation exposing (Location, program)
-import Auth exposing (logoutRequest)
-import Message exposing (Msg(..), PageMessage(..))
+import Auth exposing (logoutRequest, checkAuth)
+import Message exposing (Msg(..), PageMessage(..), AdminMessage(..))
 import Model exposing (Model)
+import Ports exposing (..)
 import Route exposing (Route)
 import Session exposing (Session)
 import View
@@ -42,6 +43,7 @@ main =
 init : Location -> ( Model, Cmd Msg )
 init location =
     Model.loadPage (Route.fromLocation location) Model.init
+        |> Tuple.mapSecond (\msg -> Cmd.batch [ msg, checkAuth ])
 
 
 
@@ -72,8 +74,11 @@ update msg model =
             View.update msg model.session model.page
                 |> (\( ( page, cmd ), session ) -> ( { model | page = page, session = session }, cmd ))
 
-        Logout ->
+        LogoutMsg ->
             ( { model | session = Session.LoggedOut }, logoutRequest )
+
+        LoginMsg ->
+            ( { model | session = Session.LoggedIn }, Cmd.none )
 
 
 
@@ -82,4 +87,8 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.batch
+        [ uploadPercentage (Page << AdminMsg << UploadPercentage)
+        , uploadFailed (Page << AdminMsg << UploadFailed)
+        , uploadSucceeded (Page << AdminMsg << UploadSucceeded)
+        ]

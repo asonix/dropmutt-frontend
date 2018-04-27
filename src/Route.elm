@@ -24,7 +24,7 @@ import UrlParser exposing (Parser, (</>), oneOf, parseHash, string)
 -}
 type Route
     = Home
-    | One
+    | Admin
     | Two
     | Gallery
     | Auth
@@ -35,7 +35,7 @@ route : Parser (Route -> a) a
 route =
     oneOf
         [ UrlParser.map Home (UrlParser.s "")
-        , UrlParser.map One (UrlParser.s "one")
+        , UrlParser.map Admin (UrlParser.s "admin")
         , UrlParser.map Two (UrlParser.s "two")
         , UrlParser.map Gallery (UrlParser.s "gallery")
         , UrlParser.map Auth (UrlParser.s "auth")
@@ -51,8 +51,8 @@ routeToString route =
                 Home ->
                     []
 
-                One ->
-                    [ "one" ]
+                Admin ->
+                    [ "admin" ]
 
                 Two ->
                     [ "two" ]

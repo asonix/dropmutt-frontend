@@ -1,4 +1,4 @@
-module Auth exposing (AuthParams, newAuthParams, logoutUrl, logoutRequest, apiEndpoint, loginUrl, signupUrl, authRequest, authPayload)
+module Auth exposing (AuthParams, Method(..), newAuthParams, logoutUrl, logoutRequest, apiEndpoint, loginUrl, signupUrl, authRequest, authPayload, checkAuth, methodToString)
 
 import Http
 import Json.Decode
@@ -37,6 +37,11 @@ signupUrl =
 logoutUrl : String
 logoutUrl =
     apiEndpoint ++ "/logout"
+
+
+checkAuthUrl : String
+checkAuthUrl =
+    apiEndpoint ++ "/check-auth"
 
 
 type Method
@@ -89,7 +94,7 @@ cookieRequest method url body decoder =
         , body = body
         , expect = Http.expectJson decoder
         , timeout = Nothing
-        , withCredentials = False
+        , withCredentials = True
         }
 
 
@@ -105,6 +110,21 @@ logoutRequest =
                     Page <| AuthMsg <| Authenticated
     in
         cookieDelete logoutUrl (Json.Decode.succeed 0)
+            |> Http.send handleResponse
+
+
+checkAuth : Cmd Msg
+checkAuth =
+    let
+        handleResponse res =
+            case res of
+                Ok a ->
+                    LoginMsg
+
+                Err error ->
+                    LogoutMsg
+    in
+        cookieRequest GET checkAuthUrl Http.emptyBody (Json.Decode.succeed 0)
             |> Http.send handleResponse
 
 

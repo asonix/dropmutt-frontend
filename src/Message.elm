@@ -1,4 +1,4 @@
-module Message exposing (Msg(..), AuthMessage(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..))
+module Message exposing (Msg(..), AdminMessage(..), AuthMessage(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..))
 
 {-| Define the Msg type and related methods
 
@@ -16,7 +16,8 @@ type Msg
     = Render Route
     | Load Route
     | Page PageMessage
-    | Logout
+    | LogoutMsg
+    | LoginMsg
 
 
 {-| The Msg type for the pages
@@ -25,6 +26,7 @@ type PageMessage
     = LayoutMsg LayoutMessage
     | GalleryMsg GalleryMessage
     | AuthMsg AuthMessage
+    | AdminMsg AdminMessage
 
 
 {-| The Msg type for authentication
@@ -37,6 +39,14 @@ type AuthMessage
     | Authenticated
     | NotAuthenticated
     | SwitchAuth
+
+
+type AdminMessage
+    = ImagesSelected
+    | PerformUpload
+    | UploadPercentage Int
+    | UploadFailed Int
+    | UploadSucceeded Int
 
 
 {-| The Msg type for the main layout
