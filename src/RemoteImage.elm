@@ -1,0 +1,58 @@
+module RemoteImage exposing (..)
+
+import Json.Decode exposing (Decoder)
+
+
+type alias RemoteImage =
+    { id : Int
+    , files : List RemoteFile
+    }
+
+
+asUrl : String -> String
+asUrl extension =
+    "http://localhost:8080/" ++ extension
+
+
+smallImage : RemoteImage -> String
+smallImage remoteImage =
+    remoteImage.files
+        |> List.filter (\file -> file.width == 200)
+        |> List.head
+        |> Maybe.map (\file -> asUrl file.path)
+        |> Maybe.withDefault ""
+
+
+fullImage : RemoteImage -> String
+fullImage remoteImage =
+    remoteImage.files
+        |> List.foldr
+            (\file1 ->
+                \file2 ->
+                    if file1.width > file2.width then
+                        file1
+                    else
+                        file2
+            )
+            { path = ""
+            , width = 0
+            , height = 0
+            }
+        |> (\file -> asUrl file.path)
+
+
+decodeRemoteImage : Decoder RemoteImage
+decodeRemoteImage =
+    Json.Decode.map2 RemoteImage (Json.Decode.field "id" Json.Decode.int) (Json.Decode.field "files" (Json.Decode.list decodeRemoteFile))
+
+
+type alias RemoteFile =
+    { path : String
+    , width : Int
+    , height : Int
+    }
+
+
+decodeRemoteFile : Decoder RemoteFile
+decodeRemoteFile =
+    Json.Decode.map3 RemoteFile (Json.Decode.field "path" Json.Decode.string) (Json.Decode.field "width" Json.Decode.int) (Json.Decode.field "height" Json.Decode.int)

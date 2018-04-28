@@ -11,68 +11,59 @@ import Css exposing (..)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, href, src, title)
 import Html.Styled.Events exposing (onWithOptions)
-import Json.Decode
+import Http
+import Json.Decode exposing (Decoder)
+import Auth exposing (apiEndpoint)
 import Colors exposing (..)
 import ImageFile exposing (..)
 import Message exposing (Msg(..), PageMessage(..), GalleryMessage(..))
+import RemoteImage exposing (..)
 
 
 {-| The state for the Gallery Page
 -}
 type alias GalleryModel =
     { files : List ImageFile
-    , currentImage : Maybe ImageFile
+    , currentImage : Maybe RemoteImage
+    , remotes : List RemoteImage
     }
-
-
-type Url
-    = Url String
-
-
-imageFiles : List ImageFile
-imageFiles =
-    [ ImageFile
-        { path = "1_5091690665780183050.png"
-        , text = "A profile picture for asonix"
-        }
-    , ImageFile
-        { path = "ArloRefSheet.png"
-        , text = "A ref sheet for Arlo"
-        }
-    , ImageFile
-        { path = "august_sign.png"
-        , text = "A ref sheet for August"
-        }
-    , ImageFile
-        { path = "DERG.png"
-        , text = "A drawing of Atlas"
-        }
-    , ImageFile
-        { path = "face.png"
-        , text = "Another profile for asonix"
-        }
-    , ImageFile
-        { path = "finasonix_1.png"
-        , text = "A phone wallpaper for asonix"
-        }
-    , ImageFile
-        { path = "IMG_20180125_190231_754.jpg"
-        , text = "A concept for August"
-        }
-    , ImageFile
-        { path = "photo_2018-03-26_00-03-09.jpg"
-        , text = "A dog that ended up being asonix"
-        }
-    ]
 
 
 {-| Initial state for the gallery page
 -}
-init : GalleryModel
+init : ( GalleryModel, Cmd Msg )
 init =
-    { files = imageFiles
-    , currentImage = Nothing
-    }
+    ( { files = []
+      , currentImage = Nothing
+      , remotes = []
+      }
+    , imageRequest 15 Nothing
+    )
+
+
+galleryEndpoint : Int -> Maybe Int -> String
+galleryEndpoint count before =
+    case before of
+        Just b ->
+            apiEndpoint ++ "/images?count=" ++ (toString count) ++ "&id=" ++ (toString before)
+
+        Nothing ->
+            apiEndpoint ++ "/images?count=" ++ (toString count)
+
+
+imageRequest : Int -> Maybe Int -> Cmd Msg
+imageRequest count before =
+    let
+        handleResponse res =
+            case res of
+                Ok images ->
+                    Page <| GalleryMsg <| Images images
+
+                Err e ->
+                    Page <| GalleryMsg <| NoImages
+    in
+        Http.get (galleryEndpoint count before) (Json.Decode.list decodeRemoteImage)
+            |> Http.send handleResponse
 
 
 {-| Modify the Gallery
@@ -86,6 +77,12 @@ update msg model =
         HideImage ->
             ( { model | currentImage = Nothing }, Cmd.none )
 
+        Images images ->
+            ( { model | remotes = images }, Cmd.none )
+
+        NoImages ->
+            ( model, Cmd.none )
+
 
 {-| Rendering the Gallery Page
 -}
@@ -93,7 +90,7 @@ view : GalleryModel -> Html Msg
 view model =
     section []
         [ article []
-            [ previewList model.files
+            [ previewList model.remotes
             ]
         , case model.currentImage of
             Just image ->
@@ -122,7 +119,7 @@ view model =
                             ]
                         ]
                         [ img
-                            [ src <| fullLink image
+                            [ src <| fullImage image
                             , css
                                 [ maxHeight (pct 100)
                                 , width auto
@@ -180,7 +177,7 @@ renderTrioPart part =
         ]
 
 
-previewList : List ImageFile -> Html Msg
+previewList : List RemoteImage -> Html Msg
 previewList imageFiles =
     imageFiles
         |> List.indexedMap (\index -> \file -> ( index, file ))
@@ -188,7 +185,7 @@ previewList imageFiles =
         |> renderTrio
 
 
-makeImageLists : ( Int, ImageFile ) -> Trio -> Trio
+makeImageLists : ( Int, RemoteImage ) -> Trio -> Trio
 makeImageLists ( index, imageFile ) lists =
     let
         rendered =
@@ -215,56 +212,67 @@ imageHover =
     ]
 
 
-previewImage : ImageFile -> Html Msg
-previewImage imageFile =
-    li
-        [ css
-            [ display inlineBlock
-            ]
-        ]
-        [ a
-            [ href "#"
-            , galleryOnClick imageFile
-            , css
-                [ textDecoration none
-                , backgroundColor darkGray
-                , hover imageHover
-                , active imageHover
-                , display block
-                , margin (Css.em 0.5)
-                , cursor pointer
-                ]
-            ]
-            [ div
-                [ css
-                    [ padding (Css.em 0.5)
-                    , cursor pointer
-                    ]
-                ]
-                [ div
+previewImage : RemoteImage -> Html Msg
+previewImage image =
+    let
+        imageFile =
+            image.files
+                |> List.filter (\file -> file.width == 200)
+                |> List.head
+    in
+        case imageFile of
+            Just imageFile ->
+                li
                     [ css
-                        [ overflow hidden
-                        , displayFlex
-                        , flexDirection column
-                        , justifyContent spaceAround
-                        , textAlign center
+                        [ display inlineBlock
                         ]
                     ]
-                    [ img
-                        [ src <| previewLink imageFile
-                        , title <| imageText imageFile
+                    [ a
+                        [ href "#"
+                        , galleryOnClick image
                         , css
-                            [ width (pct 100)
-                            , height auto
+                            [ textDecoration none
+                            , backgroundColor darkGray
+                            , hover imageHover
+                            , active imageHover
+                            , display block
+                            , margin (Css.em 0.5)
+                            , cursor pointer
                             ]
                         ]
-                        []
-                    , div [ css [ color grey ] ]
-                        [ p [] [ text <| imageText imageFile ] ]
+                        [ div
+                            [ css
+                                [ padding (Css.em 0.5)
+                                , cursor pointer
+                                ]
+                            ]
+                            [ div
+                                [ css
+                                    [ overflow hidden
+                                    , displayFlex
+                                    , flexDirection column
+                                    , justifyContent spaceAround
+                                    , textAlign center
+                                    ]
+                                ]
+                                [ img
+                                    [ src <| smallImage image
+                                    , title <| smallImage image
+                                    , css
+                                        [ width (pct 100)
+                                        , height auto
+                                        ]
+                                    ]
+                                    []
+                                , div [ css [ color grey ] ]
+                                    [ p [] [ text "placeholder text" ] ]
+                                ]
+                            ]
+                        ]
                     ]
-                ]
-            ]
-        ]
+
+            Nothing ->
+                text ""
 
 
 galleryClickAway : Attribute Msg
@@ -281,7 +289,7 @@ galleryClickAway =
         )
 
 
-galleryOnClick : ImageFile -> Attribute Msg
+galleryOnClick : RemoteImage -> Attribute Msg
 galleryOnClick imageFile =
     onWithOptions
         "click"

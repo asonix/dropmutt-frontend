@@ -155,7 +155,8 @@ loadPage route model =
                     ( model, Cmd.none )
 
                 _ ->
-                    ( { model | currentPage = Gallery Page.Gallery.init }, Cmd.none )
+                    Page.Gallery.init
+                        |> Tuple.mapFirst (\galleryModel -> { model | currentPage = Gallery galleryModel })
 
         Route.Auth ->
             case model.currentPage of

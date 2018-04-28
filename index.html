@@ -1,0 +1,83 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Dropmutt</title>
+        <style>
+html, head, body {
+    padding:0;
+    margin:0;
+}
+
+body {
+    font-family: calibri, helvetica, arial, sans-serif;
+}
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript" src="/_compile/src/Main.elm"></script>
+        <script type="text/javascript">
+var app = Elm.Main.fullscreen();
+
+function FileUpload(file) {
+    this.xhr = new XMLHttpRequest();
+    this.xhr.withCredentials = true;
+    var self = this;
+
+    this.uploadFile = function (ev) {
+        self.xhr.open("POST", ev);
+        self.xhr.overrideMimeType(file.type);
+
+        var formData = new FormData();
+        formData.append("file-upload", file, file.name);
+
+        self.xhr.send(formData);
+    };
+
+    this.xhr.upload.addEventListener("progress", function (ev) {
+        if (ev.lengthComputable) {
+            var percentage = Math.round((ev.loaded * 100) / ev.total);
+
+            app.ports.uploadPercentage.send(percentage);
+        }
+    }, false);
+
+    this.xhr.onreadystatechange = function () {
+        if (self.xhr.readyState == 4) {
+            if (self.xhr.status == 201) {
+                app.ports.uploadSucceeded.send(0);
+            } else {
+                app.ports.uploadFailed.send(0);
+            }
+        }
+    };
+}
+
+var preparedFiles = [];
+
+app.ports.imagesSelected.subscribe(function (id) {
+    var node = document.getElementById(id);
+    if (node === null) {
+        return;
+    }
+
+    var numFiles = node.files.length;
+    preparedFiles = [];
+
+    for (var i = 0; i < numFiles; i++) {
+        preparedFiles.push(new FileUpload(node.files[i]));
+    }
+});
+
+app.ports.performUpload.subscribe(function (uploadurl) {
+    if (preparedFiles.length === 0) {
+        return;
+    }
+
+    for (var i = 0; i < preparedFiles.length; i++) {
+        preparedFiles[i].uploadFile(uploadurl);
+    }
+});
+        </script>
+    </body>
+</html>

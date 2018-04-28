@@ -7,6 +7,7 @@ module Message exposing (Msg(..), AdminMessage(..), AuthMessage(..), PageMessage
 -}
 
 import ImageFile exposing (ImageFile)
+import RemoteImage exposing (RemoteImage)
 import Route exposing (Route)
 
 
@@ -58,5 +59,7 @@ type LayoutMessage
 {-| The Msg type for the Image gallery
 -}
 type GalleryMessage
-    = ViewImage ImageFile
+    = ViewImage RemoteImage
     | HideImage
+    | Images (List RemoteImage)
+    | NoImages
