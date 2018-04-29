@@ -9,7 +9,7 @@ module Page.Admin exposing (AdminModel, init, view, update)
 
 import Css exposing (..)
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (accept, action, css, for, id, method, name, type_, value)
+import Html.Styled.Attributes exposing (accept, action, css, for, id, method, multiple, name, type_, value)
 import Html.Styled.Events exposing (on, onSubmit)
 import Json.Decode
 import Auth exposing (Method(..), apiEndpoint, methodToString)
@@ -74,6 +74,7 @@ view model =
                                 [ type_ "file"
                                 , name "image"
                                 , accept "image/*"
+                                , multiple True
                                 , id fileInputId
                                 , on "change" (Json.Decode.succeed <| Page <| AdminMsg <| ImagesSelected)
                                 ]

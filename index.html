@@ -18,18 +18,20 @@ body {
         <script type="text/javascript" src="/_compile/src/Main.elm"></script>
         <script type="text/javascript">
 var app = Elm.Main.fullscreen();
+var preparedFiles = null;
 
-function FileUpload(file) {
+function FileUpload(files) {
     this.xhr = new XMLHttpRequest();
     this.xhr.withCredentials = true;
     var self = this;
 
-    this.uploadFile = function (ev) {
+    this.uploadFiles = function (ev) {
         self.xhr.open("POST", ev);
-        self.xhr.overrideMimeType(file.type);
 
         var formData = new FormData();
-        formData.append("file-upload", file, file.name);
+        for (var i = 0; i < files.length; i++) {
+            formData.append("file-uploads[]", files[i], files[i].name);
+        }
 
         self.xhr.send(formData);
     };
@@ -49,34 +51,28 @@ function FileUpload(file) {
             } else {
                 app.ports.uploadFailed.send(0);
             }
+            preparedFiles = null;
         }
     };
 }
 
-var preparedFiles = [];
-
 app.ports.imagesSelected.subscribe(function (id) {
     var node = document.getElementById(id);
     if (node === null) {
+        app.ports.uploadFailed.send(0);
         return;
     }
 
-    var numFiles = node.files.length;
-    preparedFiles = [];
-
-    for (var i = 0; i < numFiles; i++) {
-        preparedFiles.push(new FileUpload(node.files[i]));
-    }
+    preparedFiles = new FileUpload(node.files);
 });
 
 app.ports.performUpload.subscribe(function (uploadurl) {
-    if (preparedFiles.length === 0) {
+    if (preparedFiles === null) {
+        app.ports.uploadFailed.send(0);
         return;
     }
 
-    for (var i = 0; i < preparedFiles.length; i++) {
-        preparedFiles[i].uploadFile(uploadurl);
-    }
+    preparedFiles.uploadFiles(uploadurl);
 });
         </script>
     </body>
