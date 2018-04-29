@@ -20,7 +20,7 @@ import Ports exposing (performUpload)
 {-| The state for the Admin Page
 -}
 type alias AdminModel =
-    { tmp : String
+    { galleryName : String
     , uploadState : UploadState
     }
 
@@ -38,7 +38,7 @@ type UploadState
 -}
 init : AdminModel
 init =
-    { tmp = "Page Admin"
+    { galleryName = "ref-sheets"
     , uploadState = NotStarted
     }
 
@@ -69,14 +69,25 @@ view model =
                         ]
                         [ div []
                             [ label
-                                [ for "field"
+                                [ for "description"
                                 , css [ display block ]
                                 ]
-                                [ text "alt text" ]
+                                [ text "Description" ]
                             , input
                                 [ type_ "text"
-                                , name "field-input"
-                                , id "field-input"
+                                , name "description"
+                                ]
+                                []
+                            ]
+                        , div []
+                            [ label
+                                [ for "alternate-text"
+                                , css [ display block ]
+                                ]
+                                [ text "Alternate Text" ]
+                            , input
+                                [ type_ "text"
+                                , name "alternate-text"
                                 ]
                                 []
                             ]
@@ -91,10 +102,15 @@ view model =
                                 , name "file-uploads[]"
                                 , accept "image/*"
                                 , multiple True
-                                , id "file-uploads"
                                 ]
                                 []
                             ]
+                        , input
+                            [ type_ "hidden"
+                            , name "gallery-name"
+                            , value model.galleryName
+                            ]
+                            []
                         , div []
                             [ label
                                 [ for "submit"
