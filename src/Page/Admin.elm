@@ -31,6 +31,7 @@ type UploadState
     | Percentage Int
     | Failed
     | Succeeded
+    | Processing
 
 
 {-| Initial state for the admin page
@@ -103,11 +104,14 @@ view model =
                 Percentage percentage ->
                     [ h2 [] [ text ("Uploading... " ++ (toString percentage)) ] ]
 
+                Processing ->
+                    [ h2 [] [ text "Wait for it..." ] ]
+
                 Failed ->
-                    [ h2 [] [ text "Upload failed." ] ]
+                    [ h2 [] [ text "aWe fUcK :c saD FacE :c ;A;" ] ]
 
                 Succeeded ->
-                    [ h2 [] [ text "Upload succeeded!" ] ]
+                    [ h2 [] [ text "Fuck yeah!" ] ]
             )
         ]
 
@@ -134,3 +138,6 @@ update msg model =
 
         UploadSucceeded a ->
             ( { model | uploadState = Succeeded }, Cmd.none )
+
+        UploadProcessing a ->
+            ( { model | uploadState = Processing }, Cmd.none )

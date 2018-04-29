@@ -1,4 +1,4 @@
-module Message exposing (Msg(..), AdminMessage(..), AuthMessage(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..))
+module Message exposing (Msg(..), AdminMessage(..), AuthMessage(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..), SessionMessage(..))
 
 {-| Define the Msg type and related methods
 
@@ -6,6 +6,7 @@ module Message exposing (Msg(..), AdminMessage(..), AuthMessage(..), PageMessage
 
 -}
 
+import Window exposing (Size)
 import ImageFile exposing (ImageFile)
 import RemoteImage exposing (RemoteImage)
 import Route exposing (Route)
@@ -17,8 +18,14 @@ type Msg
     = Render Route
     | Load Route
     | Page PageMessage
-    | LogoutMsg
+    | Session SessionMessage
+
+
+type SessionMessage
+    = LogoutMsg
     | LoginMsg
+    | Resize Size
+    | NoSize
 
 
 {-| The Msg type for the pages
@@ -48,6 +55,7 @@ type AdminMessage
     | UploadPercentage Int
     | UploadFailed Int
     | UploadSucceeded Int
+    | UploadProcessing Int
 
 
 {-| The Msg type for the main layout

@@ -17,28 +17,37 @@ asUrl extension =
 smallImage : RemoteImage -> String
 smallImage remoteImage =
     remoteImage.files
-        |> List.filter (\file -> file.width == 200)
+        |> List.filter (\file -> file.width == 200 || file.height == 200)
         |> List.head
         |> Maybe.map (\file -> asUrl file.path)
         |> Maybe.withDefault ""
 
 
-fullImage : RemoteImage -> String
-fullImage remoteImage =
-    remoteImage.files
-        |> List.foldr
-            (\file1 ->
-                \file2 ->
-                    if file1.width > file2.width then
-                        file1
-                    else
-                        file2
-            )
-            { path = ""
-            , width = 0
-            , height = 0
-            }
-        |> (\file -> asUrl file.path)
+largeOrFull : RemoteImage -> RemoteFile
+largeOrFull remoteImage =
+    let
+        large =
+            List.filter (\file -> file.width == 1200 || file.height == 1200) remoteImage.files
+                |> List.head
+    in
+        case large of
+            Just l ->
+                l
+
+            Nothing ->
+                remoteImage.files
+                    |> List.foldr
+                        (\file1 ->
+                            \file2 ->
+                                if file1.width > file2.width then
+                                    file1
+                                else
+                                    file2
+                        )
+                        { path = ""
+                        , width = 0
+                        , height = 0
+                        }
 
 
 decodeRemoteImage : Decoder RemoteImage

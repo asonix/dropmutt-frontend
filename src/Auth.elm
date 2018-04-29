@@ -3,7 +3,7 @@ module Auth exposing (AuthParams, Method(..), newAuthParams, logoutUrl, logoutRe
 import Http
 import Json.Decode
 import Json.Encode
-import Message exposing (Msg(..), PageMessage(..), AuthMessage(..))
+import Message exposing (Msg(..), PageMessage(..), AuthMessage(..), SessionMessage(..))
 
 
 type alias AuthParams =
@@ -119,10 +119,10 @@ checkAuth =
         handleResponse res =
             case res of
                 Ok a ->
-                    LoginMsg
+                    Session LoginMsg
 
                 Err error ->
-                    LogoutMsg
+                    Session LogoutMsg
     in
         cookieRequest GET checkAuthUrl Http.emptyBody (Json.Decode.succeed 0)
             |> Http.send handleResponse

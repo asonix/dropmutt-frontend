@@ -10,7 +10,7 @@ module Model exposing (Model, init, loadPage)
 
 import Message exposing (Msg)
 import Route exposing (Route)
-import Session exposing (Session(..))
+import Session exposing (Session, SessionAuth(..))
 import View exposing (PageModel)
 
 
@@ -24,11 +24,15 @@ type alias Model =
 
 {-| Initialize the application model
 -}
-init : Model
+init : ( Model, Cmd Msg )
 init =
-    { page = View.init
-    , session = LoggedOut
-    }
+    Session.init
+        |> Tuple.mapFirst
+            (\session ->
+                { page = View.init
+                , session = session
+                }
+            )
 
 
 {-| Load a new page

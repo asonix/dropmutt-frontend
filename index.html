@@ -40,8 +40,16 @@ function FileUpload(files) {
         if (ev.lengthComputable) {
             var percentage = Math.round((ev.loaded * 100) / ev.total);
 
-            app.ports.uploadPercentage.send(percentage);
+            if (percentage === 100) {
+                app.ports.uploadProcessing.send(0);
+            } else {
+                app.ports.uploadPercentage.send(percentage);
+            }
         }
+    }, false);
+
+    this.xhr.upload.addEventListener("load", function (ev) {
+        app.ports.uploadProcessing.send(0);
     }, false);
 
     this.xhr.onreadystatechange = function () {

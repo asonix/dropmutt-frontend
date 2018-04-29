@@ -13,6 +13,7 @@ import Html.Styled.Attributes exposing (css, href, src, title)
 import Html.Styled.Events exposing (onWithOptions)
 import Http
 import Json.Decode exposing (Decoder)
+import Window exposing (Size)
 import Auth exposing (apiEndpoint)
 import Colors exposing (..)
 import ImageFile exposing (..)
@@ -86,48 +87,80 @@ update msg model =
 
 {-| Rendering the Gallery Page
 -}
-view : GalleryModel -> Html Msg
-view model =
+view : Size -> GalleryModel -> Html Msg
+view screenSize model =
     section []
         [ article []
             [ previewList model.remotes
             ]
         , case model.currentImage of
             Just image ->
-                article
-                    [ css
-                        [ position fixed
-                        , top (px 0)
-                        , left (px 0)
-                        , right (px 0)
-                        , bottom (px 0)
-                        , width (pct 100)
-                        , height (pct 100)
-                        , backgroundColor gray
-                        , displayFlex
-                        , flexDirection column
-                        , justifyContent spaceAround
-                        , overflow hidden
-                        ]
-                    , galleryClickAway
-                    ]
-                    [ div
+                let
+                    largeImage =
+                        largeOrFull image
+
+                    widthRatio =
+                        (toFloat largeImage.width) / (toFloat screenSize.width)
+
+                    heightRatio =
+                        (toFloat largeImage.height) / (toFloat screenSize.height)
+
+                    imgRatio =
+                        (toFloat largeImage.width) / (toFloat largeImage.height)
+
+                    screenRatio =
+                        (toFloat screenSize.width) / (toFloat screenSize.height)
+
+                    ( imgWidth, imgHeight ) =
+                        if imgRatio > screenRatio && largeImage.width > screenSize.width then
+                            ( px <| (toFloat <| screenSize.width - 20)
+                            , px <| (toFloat <| screenSize.width - 20) / imgRatio
+                            )
+                        else if largeImage.height > screenSize.height then
+                            ( px <| (toFloat <| screenSize.height - 20) * imgRatio
+                            , px <| (toFloat <| screenSize.height - 20)
+                            )
+                        else
+                            ( px <| toFloat largeImage.width
+                            , px <| toFloat largeImage.height
+                            )
+                in
+                    article
                         [ css
-                            [ width auto
-                            , height (vh 75)
-                            , margin2 (px 0) auto
+                            [ position fixed
+                            , top (px 0)
+                            , left (px 0)
+                            , right (px 0)
+                            , bottom (px 0)
+                            , width (pct 100)
+                            , height (pct 100)
+                            , backgroundColor gray
+                            , displayFlex
+                            , flexDirection column
+                            , justifyContent spaceAround
+                            , overflow hidden
                             ]
+                        , galleryClickAway
                         ]
-                        [ img
-                            [ src <| fullImage image
-                            , css
-                                [ maxHeight (pct 100)
-                                , width auto
+                        [ div
+                            [ css
+                                [ height imgHeight
+                                , width imgWidth
+                                , margin auto
                                 ]
                             ]
-                            []
+                            [ div []
+                                [ img
+                                    [ src <| asUrl largeImage.path
+                                    , css
+                                        [ maxHeight <| pct 100
+                                        , width <| pct 100
+                                        ]
+                                    ]
+                                    []
+                                ]
+                            ]
                         ]
-                    ]
 
             Nothing ->
                 text ""
@@ -217,7 +250,7 @@ previewImage image =
     let
         imageFile =
             image.files
-                |> List.filter (\file -> file.width == 200)
+                |> List.filter (\file -> file.width == 200 || file.height == 200)
                 |> List.head
     in
         case imageFile of
@@ -244,29 +277,39 @@ previewImage image =
                             [ css
                                 [ padding (Css.em 0.5)
                                 , cursor pointer
+                                , textAlign center
                                 ]
                             ]
                             [ div
                                 [ css
-                                    [ overflow hidden
-                                    , displayFlex
+                                    [ displayFlex
                                     , flexDirection column
                                     , justifyContent spaceAround
-                                    , textAlign center
+                                    , height (px 200)
+                                    , width (px 200)
                                     ]
                                 ]
-                                [ img
-                                    [ src <| smallImage image
-                                    , title <| smallImage image
-                                    , css
-                                        [ width (pct 100)
-                                        , height auto
+                                [ div
+                                    [ css [ overflow hidden ] ]
+                                    [ img
+                                        [ src <| RemoteImage.asUrl imageFile.path
+                                        , title <| RemoteImage.asUrl imageFile.path
+                                        , if imageFile.width > imageFile.height then
+                                            css
+                                                [ width (px 200)
+                                                , height auto
+                                                ]
+                                          else
+                                            css
+                                                [ height (px 200)
+                                                , width auto
+                                                ]
                                         ]
+                                        []
                                     ]
-                                    []
-                                , div [ css [ color grey ] ]
-                                    [ p [] [ text "placeholder text" ] ]
                                 ]
+                            , div [ css [ color grey ] ]
+                                [ p [] [ text "placeholder text" ] ]
                             ]
                         ]
                     ]

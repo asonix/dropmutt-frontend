@@ -18,7 +18,7 @@ import Json.Encode
 import Auth exposing (..)
 import Message exposing (Msg(..), PageMessage(..), AuthMessage(..))
 import Route exposing (Route(..))
-import Session exposing (Session(..))
+import Session exposing (Session, SessionAuth(..))
 
 
 {-| The state for the Auth Page
@@ -153,10 +153,10 @@ update msg session model =
             ( ( { model | password = password }, Cmd.none ), session )
 
         Authenticated ->
-            ( ( model, Route.modifyUrl Home ), LoggedIn )
+            ( ( model, Route.modifyUrl Home ), { session | auth = LoggedIn } )
 
         NotAuthenticated ->
-            ( ( model, Cmd.none ), LoggedOut )
+            ( ( model, Cmd.none ), { session | auth = LoggedOut } )
 
         SwitchAuth ->
             ( ( switchAuth model, Cmd.none ), session )

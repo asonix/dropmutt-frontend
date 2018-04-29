@@ -16,3 +16,6 @@ port uploadSucceeded : (Int -> msg) -> Sub msg
 
 
 port performUpload : String -> Cmd msg
+
+
+port uploadProcessing : (Int -> msg) -> Sub msg

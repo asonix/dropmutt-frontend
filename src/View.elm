@@ -20,14 +20,14 @@ import Html.Styled.Events exposing (onCheck, onWithOptions)
 import Json.Decode
 import Task exposing (perform)
 import Colors exposing (..)
-import Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..))
+import Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..), SessionMessage(..))
 import Page.Home exposing (HomeModel)
 import Page.Admin exposing (AdminModel)
 import Page.Gallery exposing (GalleryModel)
 import Page.Auth exposing (AuthModel)
 import Page.NotFound exposing (NotFoundModel)
 import Route exposing (Route)
-import Session exposing (Session)
+import Session exposing (Session, SessionAuth(..))
 
 
 {-| The main model for the application
@@ -117,7 +117,7 @@ init =
               }
             , { text = "Logout"
               , title = "Log out"
-              , kind = ToAction LogoutMsg
+              , kind = ToAction <| Message.Session LogoutMsg
               }
             ]
         }
@@ -209,7 +209,7 @@ layout session model =
             ]
             [ headerView model.header
             , navView session model.nav
-            , pageView model.currentPage
+            , pageView session model.currentPage
             , footerView model.footer
             ]
         ]
@@ -225,8 +225,8 @@ lightShadow =
     boxShadow4 (px 0) (px 3) (px 4) grey
 
 
-pageView : PageModels -> Html Msg
-pageView model =
+pageView : Session -> PageModels -> Html Msg
+pageView session model =
     div
         [ css
             [ backgroundColor white
@@ -245,7 +245,7 @@ pageView model =
                 Page.Admin.view oneModel
 
             Gallery galleryModel ->
-                Page.Gallery.view galleryModel
+                Page.Gallery.view session.dimentions galleryModel
 
             Auth authModel ->
                 Page.Auth.view authModel
@@ -292,11 +292,11 @@ navView session model =
                 |> addListIndex (startIndex + 1)
 
         ( newEnd, navAuth ) =
-            (case session of
-                Session.LoggedOut ->
+            (case session.auth of
+                LoggedOut ->
                     model.loggedOut
 
-                Session.LoggedIn ->
+                LoggedIn ->
                     model.loggedIn
             )
                 |> addListIndex end
