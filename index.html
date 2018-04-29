@@ -18,20 +18,16 @@ body {
         <script type="text/javascript" src="/_compile/src/Main.elm"></script>
         <script type="text/javascript">
 var app = Elm.Main.fullscreen();
-var preparedFiles = null;
 
-function FileUpload(files) {
+function FileUpload(formNode, uploadUrl) {
     this.xhr = new XMLHttpRequest();
     this.xhr.withCredentials = true;
     var self = this;
 
-    this.uploadFiles = function (ev) {
-        self.xhr.open("POST", ev);
+    this.uploadFiles = function () {
+        self.xhr.open("POST", uploadUrl);
 
-        var formData = new FormData();
-        for (var i = 0; i < files.length; i++) {
-            formData.append("file-uploads[]", files[i], files[i].name);
-        }
+        var formData = new FormData(formNode);
 
         self.xhr.send(formData);
     };
@@ -64,23 +60,18 @@ function FileUpload(files) {
     };
 }
 
-app.ports.imagesSelected.subscribe(function (id) {
-    var node = document.getElementById(id);
-    if (node === null) {
+app.ports.performUpload.subscribe(function (input) {
+    var formId = input[0];
+    var uploadUrl = input[1];
+    var formNode = document.getElementById(formId);
+
+    if (formNode === null || uploadUrl === null) {
         app.ports.uploadFailed.send(0);
         return;
     }
 
-    preparedFiles = new FileUpload(node.files);
-});
-
-app.ports.performUpload.subscribe(function (uploadurl) {
-    if (preparedFiles === null) {
-        app.ports.uploadFailed.send(0);
-        return;
-    }
-
-    preparedFiles.uploadFiles(uploadurl);
+    var f = new FileUpload(formNode, uploadUrl);
+    f.uploadFiles();
 });
         </script>
     </body>

@@ -14,7 +14,7 @@ import Html.Styled.Events exposing (on, onSubmit)
 import Json.Decode
 import Auth exposing (Method(..), apiEndpoint, methodToString)
 import Message exposing (Msg(..), PageMessage(..), AdminMessage(..))
-import Ports exposing (performUpload, imagesSelected)
+import Ports exposing (performUpload)
 
 
 {-| The state for the Admin Page
@@ -48,9 +48,9 @@ uploadUrl =
     apiEndpoint ++ "/upload"
 
 
-fileInputId : String
-fileInputId =
-    "file-upload"
+formId : String
+formId =
+    "upload-form"
 
 
 {-| Rendering the Admin Page
@@ -64,8 +64,23 @@ view model =
                     [ div []
                         [ h2 [] [ text "Upload file" ] ]
                     , form
-                        [ formOnSubmit ]
+                        [ formOnSubmit
+                        , id formId
+                        ]
                         [ div []
+                            [ label
+                                [ for "field"
+                                , css [ display block ]
+                                ]
+                                [ text "alt text" ]
+                            , input
+                                [ type_ "text"
+                                , name "field-input"
+                                , id "field-input"
+                                ]
+                                []
+                            ]
+                        , div []
                             [ label
                                 [ for "image"
                                 , css [ display block ]
@@ -73,11 +88,10 @@ view model =
                                 [ text "Select file" ]
                             , input
                                 [ type_ "file"
-                                , name "image"
+                                , name "file-uploads[]"
                                 , accept "image/*"
                                 , multiple True
-                                , id fileInputId
-                                , on "change" (Json.Decode.succeed <| Page <| AdminMsg <| ImagesSelected)
+                                , id "file-uploads"
                                 ]
                                 []
                             ]
@@ -124,11 +138,8 @@ formOnSubmit =
 update : AdminMessage -> AdminModel -> ( AdminModel, Cmd Msg )
 update msg model =
     case msg of
-        ImagesSelected ->
-            ( model, imagesSelected fileInputId )
-
         PerformUpload ->
-            ( { model | uploadState = Started }, performUpload uploadUrl )
+            ( { model | uploadState = Started }, performUpload ( formId, uploadUrl ) )
 
         UploadPercentage percentage ->
             ( { model | uploadState = Percentage percentage }, Cmd.none )

@@ -50,8 +50,7 @@ type AuthMessage
 
 
 type AdminMessage
-    = ImagesSelected
-    | PerformUpload
+    = PerformUpload
     | UploadPercentage Int
     | UploadFailed Int
     | UploadSucceeded Int
