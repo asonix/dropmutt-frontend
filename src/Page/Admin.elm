@@ -9,7 +9,7 @@ module Page.Admin exposing (AdminModel, init, view, update)
 
 import Css exposing (..)
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (accept, action, css, for, id, method, multiple, name, type_, value)
+import Html.Styled.Attributes exposing (accept, action, css, for, id, method, name, type_, value)
 import Html.Styled.Events exposing (on, onSubmit)
 import Json.Decode
 import Auth exposing (Method(..), apiEndpoint, methodToString)
@@ -99,9 +99,8 @@ view model =
                                 [ text "Select file" ]
                             , input
                                 [ type_ "file"
-                                , name "file-uploads[]"
+                                , name "file-upload"
                                 , accept "image/*"
-                                , multiple True
                                 ]
                                 []
                             ]

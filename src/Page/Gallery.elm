@@ -151,7 +151,7 @@ view screenSize model =
                             ]
                             [ div []
                                 [ img
-                                    [ src <| asUrl largeImage.path
+                                    [ src <| asUrl largeImage
                                     , css
                                         [ maxHeight <| pct 100
                                         , width <| pct 100
@@ -278,6 +278,7 @@ previewImage image =
                                 [ padding (Css.em 0.5)
                                 , cursor pointer
                                 , textAlign center
+                                , width (px 200)
                                 ]
                             ]
                             [ div
@@ -292,8 +293,8 @@ previewImage image =
                                 [ div
                                     [ css [ overflow hidden ] ]
                                     [ img
-                                        [ src <| RemoteImage.asUrl imageFile.path
-                                        , title <| RemoteImage.asUrl imageFile.path
+                                        [ src <| RemoteImage.asUrl imageFile
+                                        , title <| RemoteImage.alternateText image
                                         , if imageFile.width > imageFile.height then
                                             css
                                                 [ width (px 200)
@@ -308,8 +309,6 @@ previewImage image =
                                         []
                                     ]
                                 ]
-                            , div [ css [ color grey ] ]
-                                [ p [] [ text "placeholder text" ] ]
                             ]
                         ]
                     ]

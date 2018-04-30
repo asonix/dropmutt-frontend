@@ -6,12 +6,9 @@ import Json.Decode exposing (Decoder)
 type alias RemoteImage =
     { id : Int
     , files : List RemoteFile
+    , description : String
+    , alternateText : String
     }
-
-
-asUrl : String -> String
-asUrl extension =
-    "http://localhost:8080/" ++ extension
 
 
 smallImage : RemoteImage -> String
@@ -19,7 +16,7 @@ smallImage remoteImage =
     remoteImage.files
         |> List.filter (\file -> file.width == 200 || file.height == 200)
         |> List.head
-        |> Maybe.map (\file -> asUrl file.path)
+        |> Maybe.map asUrl
         |> Maybe.withDefault ""
 
 
@@ -50,9 +47,23 @@ largeOrFull remoteImage =
                         }
 
 
+alternateText : RemoteImage -> String
+alternateText remoteImage =
+    remoteImage.alternateText
+
+
+description : RemoteImage -> String
+description remoteImage =
+    remoteImage.description
+
+
 decodeRemoteImage : Decoder RemoteImage
 decodeRemoteImage =
-    Json.Decode.map2 RemoteImage (Json.Decode.field "id" Json.Decode.int) (Json.Decode.field "files" (Json.Decode.list decodeRemoteFile))
+    Json.Decode.map4 RemoteImage
+        (Json.Decode.field "id" Json.Decode.int)
+        (Json.Decode.field "files" <| Json.Decode.list decodeRemoteFile)
+        (Json.Decode.field "description" Json.Decode.string)
+        (Json.Decode.field "alternate_text" Json.Decode.string)
 
 
 type alias RemoteFile =
@@ -60,6 +71,11 @@ type alias RemoteFile =
     , width : Int
     , height : Int
     }
+
+
+asUrl : RemoteFile -> String
+asUrl extension =
+    "http://localhost:8080/" ++ extension.path
 
 
 decodeRemoteFile : Decoder RemoteFile
