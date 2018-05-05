@@ -1,4 +1,4 @@
-module Route exposing (Route(..), fromLocation, href, modifyUrl)
+module Route exposing (..)
 
 {-| Define the Route type
 
@@ -17,7 +17,7 @@ This type provides a type-safe mechanism for changing pages
 import Html.Styled exposing (Attribute)
 import Html.Styled.Attributes
 import Navigation
-import UrlParser exposing (Parser, (</>), oneOf, parseHash, string)
+import UrlParser exposing (Parser, (</>), oneOf, parseHash, string, int)
 
 
 {-| Define which pages are available
@@ -26,9 +26,15 @@ type Route
     = Home
     | Admin
     | Two
-    | Gallery
+    | Galleries (Maybe Gallery)
     | Auth
     | NotFound
+
+
+type alias Gallery =
+    { name : String
+    , image : Maybe String
+    }
 
 
 route : Parser (Route -> a) a
@@ -37,7 +43,9 @@ route =
         [ UrlParser.map Home (UrlParser.s "")
         , UrlParser.map Admin (UrlParser.s "admin")
         , UrlParser.map Two (UrlParser.s "two")
-        , UrlParser.map Gallery (UrlParser.s "gallery")
+        , UrlParser.map (Galleries (Maybe Gallery)) (UrlParser.s "galleries")
+        , UrlParser.map (Galleries (Maybe Gallery)) (UrlParser.s "galleries" </> string)
+        , UrlParser.map (Galleries (Maybe Gallery)) (UrlParser.s "galleries" </> string </> string)
         , UrlParser.map Auth (UrlParser.s "auth")
         , UrlParser.map NotFound (UrlParser.s "404")
         ]
@@ -57,8 +65,18 @@ routeToString route =
                 Two ->
                     [ "two" ]
 
-                Gallery ->
-                    [ "gallery" ]
+                Galleries gallery ->
+                    case gallery of
+                        Just gallery ->
+                            case gallery.image of
+                                Just image ->
+                                    [ "galleries", gallery.name, image ]
+
+                                Nothing ->
+                                    [ "galleries", gallery.name ]
+
+                        Nothing ->
+                            [ "galleries" ]
 
                 Auth ->
                     [ "auth" ]

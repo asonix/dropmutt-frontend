@@ -1,8 +1,8 @@
-module Page.Gallery exposing (GalleryModel, init, view, update)
+module Page.Galleries.Gallery exposing (Gallery, init, view, update)
 
 {-| Defines the gallery page
 
-@docs GalleryModel
+@docs Gallery
 @docs init
 
 -}
@@ -17,12 +17,12 @@ import Window exposing (Size)
 import Session.Auth exposing (apiEndpoint)
 import Colors exposing (..)
 import Message exposing (GalleryMessage(..))
-import Page.Gallery.RemoteImage exposing (..)
+import Page.Galleries.Gallery.RemoteImage exposing (..)
 
 
 {-| The state for the Gallery Page
 -}
-type alias GalleryModel =
+type alias Gallery =
     { currentImage : Maybe RemoteImage
     , remotes : List RemoteImage
     }
@@ -30,7 +30,7 @@ type alias GalleryModel =
 
 {-| Initial state for the gallery page
 -}
-init : Maybe GalleryModel -> ( GalleryModel, Cmd GalleryMessage )
+init : Maybe Gallery -> ( Gallery, Cmd GalleryMessage )
 init model =
     case model of
         Just model ->
@@ -71,7 +71,7 @@ imageRequest count before =
 
 {-| Modify the Gallery
 -}
-update : GalleryMessage -> GalleryModel -> ( GalleryModel, Cmd GalleryMessage )
+update : GalleryMessage -> Gallery -> ( Gallery, Cmd GalleryMessage )
 update msg model =
     case msg of
         ViewImage remoteImage ->
@@ -89,7 +89,7 @@ update msg model =
 
 {-| Rendering the Gallery Page
 -}
-view : Size -> GalleryModel -> Html GalleryMessage
+view : Size -> Gallery -> Html GalleryMessage
 view screenSize model =
     let
         contentWidth =

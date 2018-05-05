@@ -7,7 +7,7 @@ module Message exposing (Msg(..), AdminMessage(..), AuthPageMessage(..), PageMes
 -}
 
 import Window exposing (Size)
-import Page.Gallery.RemoteImage exposing (RemoteImage)
+import Page.Galleries.Gallery.RemoteImage exposing (RemoteImage)
 import Route exposing (Route)
 
 
@@ -35,7 +35,7 @@ type SessionMessage
 -}
 type PageMessage
     = LayoutMsg LayoutMessage
-    | GalleryMsg GalleryMessage
+    | GalleriesMsg GalleriesMessage
     | AuthMsg AuthPageMessage
     | AdminMsg AdminMessage
     | HomeMsg HomeMessage
@@ -72,6 +72,11 @@ type AdminMessage
 -}
 type LayoutMessage
     = ShowNav Bool
+
+
+type GalleriesMessage
+    = GalleryMsg GalleryMessage
+    | Select String
 
 
 {-| The Msg type for the Image gallery

@@ -1,8 +1,8 @@
-module Page.Admin exposing (AdminModel, init, view, update)
+module Page.Admin exposing (Admin, init, view, update)
 
 {-| Defines the admin page
 
-    @docs AdminModel
+    @docs Admin
     @docs init
 
 -}
@@ -19,7 +19,7 @@ import Ports exposing (performUpload)
 
 {-| The state for the Admin Page
 -}
-type alias AdminModel =
+type alias Admin =
     { galleryName : String
     , uploadState : UploadState
     }
@@ -36,7 +36,7 @@ type UploadState
 
 {-| Initial state for the admin page
 -}
-init : Maybe AdminModel -> AdminModel
+init : Maybe Admin -> Admin
 init model =
     case model of
         Just model ->
@@ -60,7 +60,7 @@ formId =
 
 {-| Rendering the Admin Page
 -}
-view : AdminModel -> Html AdminMessage
+view : Admin -> Html AdminMessage
 view model =
     section []
         [ article []
@@ -155,7 +155,7 @@ formOnSubmit =
     onSubmit PerformUpload
 
 
-update : AdminMessage -> AdminModel -> ( AdminModel, Cmd AdminMessage )
+update : AdminMessage -> Admin -> ( Admin, Cmd AdminMessage )
 update msg model =
     case msg of
         PerformUpload ->

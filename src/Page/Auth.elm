@@ -1,8 +1,8 @@
-module Page.Auth exposing (AuthModel, init, view, update)
+module Page.Auth exposing (Auth, init, view, update)
 
 {-| Defines the auth page
 
-    @docs AuthModel
+    @docs Auth
     @docs init
 
 -}
@@ -22,7 +22,7 @@ import Route exposing (Route(..))
 
 {-| The state for the Auth Page
 -}
-type alias AuthModel =
+type alias Auth =
     { authType : AuthType
     , username : String
     , password : String
@@ -36,7 +36,7 @@ type AuthType
 
 {-| Initial state for the auth page
 -}
-init : Maybe AuthModel -> AuthModel
+init : Maybe Auth -> Auth
 init model =
     case model of
         Just model ->
@@ -51,7 +51,7 @@ init model =
 
 {-| Rendering the Auth Page
 -}
-view : AuthModel -> Html AuthPageMessage
+view : Auth -> Html AuthPageMessage
 view model =
     section []
         [ article []
@@ -141,7 +141,7 @@ formOnSubmit authType =
         onSubmit msg
 
 
-update : AuthPageMessage -> AuthModel -> ( AuthModel, Cmd SessionMessage )
+update : AuthPageMessage -> Auth -> ( Auth, Cmd SessionMessage )
 update msg model =
     case msg of
         Login ->
@@ -160,7 +160,7 @@ update msg model =
             ( switchAuth model, Cmd.none )
 
 
-switchAuth : AuthModel -> AuthModel
+switchAuth : Auth -> Auth
 switchAuth model =
     case model.authType of
         LogIn ->

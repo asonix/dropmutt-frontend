@@ -1,9 +1,9 @@
-module Page exposing (PageModel, PageModels, PageSession, Link, init, layout, loadPage, update, initPageSession)
+module Page exposing (Page, Pages, PageSession, Link, init, layout, loadPage, update, initPageSession)
 
 {-| Defines the main layout for the application
 
-@docs PageModel
-@docs PageModels
+@docs Page
+@docs Pages
 @docs Link
 @docs init
 @docs layout
@@ -19,43 +19,43 @@ import Html.Styled.Events exposing (onCheck, onWithOptions)
 import Json.Decode
 import Task exposing (perform)
 import Colors exposing (..)
-import Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..), SessionMessage(..))
-import Page.Home exposing (HomeModel)
-import Page.Admin exposing (AdminModel)
-import Page.Gallery exposing (GalleryModel)
-import Page.Auth exposing (AuthModel)
-import Page.NotFound exposing (NotFoundModel)
+import Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleriesMessage(..), SessionMessage(..))
+import Page.Home exposing (Home)
+import Page.Admin exposing (Admin)
+import Page.Galleries exposing (Galleries)
+import Page.Auth exposing (Auth)
+import Page.NotFound exposing (NotFound)
 import Route exposing (Route)
 import Session exposing (Session, SessionAuth(..))
 
 
 {-| The main model for the application
 -}
-type alias PageModel =
+type alias Page =
     { header : Header
     , nav : Nav
     , footer : Footer
-    , currentPage : PageModels
+    , currentPage : Pages
     , route : Route
     }
 
 
 {-| A union type between all the types of page models
 -}
-type PageModels
-    = Home HomeModel
-    | Admin AdminModel
-    | Gallery GalleryModel
-    | Auth AuthModel
-    | NotFound NotFoundModel
+type Pages
+    = Home Home
+    | Admin Admin
+    | Galleries Galleries
+    | Auth Auth
+    | NotFound NotFound
 
 
 type alias PageSession =
-    { home : Maybe HomeModel
-    , admin : Maybe AdminModel
-    , gallery : Maybe GalleryModel
-    , auth : Maybe AuthModel
-    , notFound : Maybe NotFoundModel
+    { home : Maybe Home
+    , admin : Maybe Admin
+    , gallery : Maybe Galleries
+    , auth : Maybe Auth
+    , notFound : Maybe NotFound
     }
 
 
@@ -105,7 +105,7 @@ type LinkKind
 
 {-| Initialize the base state of the layout
 -}
-init : PageModel
+init : Page
 init =
     { header =
         { text = "Bubble letters maybe?"
@@ -114,9 +114,9 @@ init =
         }
     , nav =
         { nav =
-            [ { text = "Gallery"
+            [ { text = "Galleries"
               , title = "View the image gallery"
-              , kind = ToRoute Route.Gallery
+              , kind = ToRoute Route.GalleriesList
               }
             ]
         , loggedOut =
@@ -148,7 +148,7 @@ init =
 
 {-| Render a new page
 -}
-loadPage : Route -> PageSession -> PageModel -> ( PageModel, Cmd Msg )
+loadPage : Route -> PageSession -> Page -> ( Page, Cmd Msg )
 loadPage route pageSession model =
     case route of
         Route.Home ->
@@ -177,22 +177,22 @@ loadPage route pageSession model =
                     , Cmd.none
                     )
 
-        Route.Gallery ->
+        Route.Galleries name ->
             case model.currentPage of
-                Gallery _ ->
+                Galleries _ ->
                     ( model, Cmd.none )
 
                 _ ->
                     pageSession.gallery
-                        |> Page.Gallery.init
+                        |> Page.GalleriesList.Galleries.init
                         |> Tuple.mapFirst
                             (\galleryModel ->
                                 { model
-                                    | currentPage = Gallery galleryModel
+                                    | currentPage = Galleries galleryModel
                                     , route = route
                                 }
                             )
-                        |> (Tuple.mapSecond (Cmd.map GalleryMsg))
+                        |> (Tuple.mapSecond (Cmd.map GalleriesMsg))
                         |> (Tuple.mapSecond (Cmd.map Page))
 
         Route.Auth ->
@@ -227,7 +227,7 @@ loadPage route pageSession model =
 
 {-| The main application layout
 -}
-layout : Session PageSession -> PageModel -> Html Msg
+layout : Session PageSession -> Page -> Html Msg
 layout session model =
     div
         [ css
@@ -272,7 +272,7 @@ lightShadow =
     boxShadow4 (px 0) (px 3) (px 4) grey
 
 
-pageView : Session PageSession -> PageModels -> Html Msg
+pageView : Session PageSession -> Pages -> Html Msg
 pageView session model =
     div
         [ css
@@ -297,10 +297,10 @@ pageView session model =
                     |> Html.Styled.map AdminMsg
                     |> Html.Styled.map Page
 
-            Gallery galleryModel ->
+            Galleries galleryModel ->
                 galleryModel
-                    |> Page.Gallery.view session.dimensions
-                    |> Html.Styled.map GalleryMsg
+                    |> Page.Galleries.view session.dimensions
+                    |> Html.Styled.map GalleriesMsg
                     |> Html.Styled.map Page
 
             Auth authModel ->
@@ -566,30 +566,30 @@ footerView model =
 
 {-| Update the state of the layout
 -}
-update : PageMessage -> Session PageSession -> PageModel -> ( ( PageModel, Cmd Msg ), Session PageSession )
+update : PageMessage -> Session PageSession -> Page -> ( ( Page, Cmd Msg ), Session PageSession )
 update msg session model =
     case msg of
         LayoutMsg layoutMsg ->
             ( ( model, Cmd.none ), session )
 
-        GalleryMsg galleryMsg ->
+        GalleriesMsg galleryMsg ->
             case model.currentPage of
-                Gallery galleryModel ->
+                Galleries galleryModel ->
                     let
-                        ( newGalleryModel, newGalleryMsg ) =
-                            Page.Gallery.update galleryMsg galleryModel
+                        ( newGalleries, newGalleriesMsg ) =
+                            Page.Galleries.update galleryMsg galleryModel
 
                         newModel =
-                            { model | currentPage = Gallery newGalleryModel }
+                            { model | currentPage = Galleries newGalleries }
 
                         cmd =
-                            Cmd.map (Page << GalleryMsg) newGalleryMsg
+                            Cmd.map (Page << GalleriesMsg) newGalleriesMsg
 
                         pageSession =
                             Session.getPageSession session
 
                         newPageSession =
-                            { pageSession | gallery = Just newGalleryModel }
+                            { pageSession | gallery = Just newGalleries }
 
                         newSession =
                             Session.setPageSession newPageSession session
@@ -603,11 +603,11 @@ update msg session model =
             case model.currentPage of
                 Auth authModel ->
                     let
-                        ( newAuthModel, newSessionMsg ) =
+                        ( newAuth, newSessionMsg ) =
                             Page.Auth.update authMsg authModel
 
                         newModel =
-                            { model | currentPage = Auth newAuthModel }
+                            { model | currentPage = Auth newAuth }
 
                         cmd =
                             Cmd.map (Message.Session) newSessionMsg
@@ -616,7 +616,7 @@ update msg session model =
                             Session.getPageSession session
 
                         newPageSession =
-                            { pageSession | auth = Just newAuthModel }
+                            { pageSession | auth = Just newAuth }
 
                         newSession =
                             Session.setPageSession newPageSession session
@@ -630,11 +630,11 @@ update msg session model =
             case model.currentPage of
                 Admin adminModel ->
                     let
-                        ( newAdminModel, newAdminMsg ) =
+                        ( newAdmin, newAdminMsg ) =
                             Page.Admin.update adminMsg adminModel
 
                         newModel =
-                            { model | currentPage = Admin newAdminModel }
+                            { model | currentPage = Admin newAdmin }
 
                         cmd =
                             Cmd.map (Page << AdminMsg) newAdminMsg
@@ -643,7 +643,7 @@ update msg session model =
                             Session.getPageSession session
 
                         newPageSession =
-                            { pageSession | admin = Just newAdminModel }
+                            { pageSession | admin = Just newAdmin }
 
                         newSession =
                             Session.setPageSession newPageSession session

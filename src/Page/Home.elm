@@ -1,8 +1,8 @@
-module Page.Home exposing (HomeModel, init, view)
+module Page.Home exposing (Home, init, view)
 
 {-| Defines the home page
 
-    @docs HomeModel
+    @docs Home
     @docs init
 
 -}
@@ -15,14 +15,14 @@ import Message exposing (HomeMessage)
 
 {-| The state for the Home Page
 -}
-type alias HomeModel =
+type alias Home =
     { tmp : String
     }
 
 
 {-| Initial state for the home page
 -}
-init : Maybe HomeModel -> HomeModel
+init : Maybe Home -> Home
 init model =
     case model of
         Just model ->
@@ -35,7 +35,7 @@ init model =
 
 {-| Rendering the Home Page
 -}
-view : HomeModel -> Html HomeMessage
+view : Home -> Html HomeMessage
 view model =
     section []
         [ article []

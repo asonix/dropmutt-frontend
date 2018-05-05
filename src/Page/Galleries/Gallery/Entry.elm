@@ -1,4 +1,4 @@
-module Page.Gallery.Entry exposing (EntryModel)
+module Page.Galleries.Gallery.Entry exposing (EntryModel)
 
 import Css exposing (..)
 import Html.Styled exposing (..)

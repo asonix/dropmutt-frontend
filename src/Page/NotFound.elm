@@ -1,8 +1,8 @@
-module Page.NotFound exposing (NotFoundModel, init, view)
+module Page.NotFound exposing (NotFound, init, view)
 
 {-| Defines the notFound page
 
-    @docs NotFoundModel
+    @docs NotFound
     @docs init
 
 -}
@@ -15,14 +15,14 @@ import Message exposing (NotFoundMessage)
 
 {-| The state for the NotFound Page
 -}
-type alias NotFoundModel =
+type alias NotFound =
     { tmp : String
     }
 
 
 {-| Initial state for the notFound page
 -}
-init : Maybe NotFoundModel -> NotFoundModel
+init : Maybe NotFound -> NotFound
 init model =
     case model of
         Just model ->
@@ -35,7 +35,7 @@ init model =
 
 {-| Rendering the NotFound Page
 -}
-view : NotFoundModel -> Html NotFoundMessage
+view : NotFound -> Html NotFoundMessage
 view model =
     section []
         [ article []
