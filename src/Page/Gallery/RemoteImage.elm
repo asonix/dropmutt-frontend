@@ -1,4 +1,4 @@
-module RemoteImage exposing (..)
+module Page.Gallery.RemoteImage exposing (..)
 
 import Json.Decode exposing (Decoder)
 

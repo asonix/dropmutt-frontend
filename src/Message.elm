@@ -1,4 +1,4 @@
-module Message exposing (Msg(..), AdminMessage(..), AuthMessage(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..), SessionMessage(..))
+module Message exposing (Msg(..), AdminMessage(..), AuthPageMessage(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..), SessionMessage(..), HomeMessage(..), NotFoundMessage(..))
 
 {-| Define the Msg type and related methods
 
@@ -7,8 +7,7 @@ module Message exposing (Msg(..), AdminMessage(..), AuthMessage(..), PageMessage
 -}
 
 import Window exposing (Size)
-import ImageFile exposing (ImageFile)
-import RemoteImage exposing (RemoteImage)
+import Page.Gallery.RemoteImage exposing (RemoteImage)
 import Route exposing (Route)
 
 
@@ -22,10 +21,14 @@ type Msg
 
 
 type SessionMessage
-    = LogoutMsg
+    = LogoutMsg Route
     | LoginMsg
     | Resize Size
     | NoSize
+    | LoggedOut Route
+    | LoggedOutNoRedirect
+    | LoggedIn Route
+    | LoggedInNoRedirect
 
 
 {-| The Msg type for the pages
@@ -33,20 +36,28 @@ type SessionMessage
 type PageMessage
     = LayoutMsg LayoutMessage
     | GalleryMsg GalleryMessage
-    | AuthMsg AuthMessage
+    | AuthMsg AuthPageMessage
     | AdminMsg AdminMessage
+    | HomeMsg HomeMessage
+    | NotFoundMsg NotFoundMessage
 
 
 {-| The Msg type for authentication
 -}
-type AuthMessage
+type AuthPageMessage
     = Login
     | Signup
     | Username String
     | Password String
-    | Authenticated
-    | NotAuthenticated
     | SwitchAuth
+
+
+type HomeMessage
+    = HomeMessage
+
+
+type NotFoundMessage
+    = NotFoundMessage
 
 
 type AdminMessage

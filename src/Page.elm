@@ -1,4 +1,4 @@
-module View exposing (PageModel, PageModels, Link, init, layout, loadPage, update)
+module Page exposing (PageModel, PageModels, PageSession, Link, init, layout, loadPage, update, initPageSession)
 
 {-| Defines the main layout for the application
 
@@ -13,7 +13,6 @@ module View exposing (PageModel, PageModels, Link, init, layout, loadPage, updat
 
 import Css exposing (..)
 import Css.Media exposing (withMedia)
-import Html
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, class, rel, src, title, tabindex, type_)
 import Html.Styled.Events exposing (onCheck, onWithOptions)
@@ -37,6 +36,7 @@ type alias PageModel =
     , nav : Nav
     , footer : Footer
     , currentPage : PageModels
+    , route : Route
     }
 
 
@@ -50,6 +50,25 @@ type PageModels
     | NotFound NotFoundModel
 
 
+type alias PageSession =
+    { home : Maybe HomeModel
+    , admin : Maybe AdminModel
+    , gallery : Maybe GalleryModel
+    , auth : Maybe AuthModel
+    , notFound : Maybe NotFoundModel
+    }
+
+
+initPageSession : PageSession
+initPageSession =
+    { home = Nothing
+    , admin = Nothing
+    , gallery = Nothing
+    , auth = Nothing
+    , notFound = Nothing
+    }
+
+
 type alias Header =
     Link
 
@@ -57,7 +76,7 @@ type alias Header =
 type alias Nav =
     { nav : List Link
     , loggedOut : List Link
-    , loggedIn : List Link
+    , loggedIn : Route -> List Link
     }
 
 
@@ -95,11 +114,7 @@ init =
         }
     , nav =
         { nav =
-            [ { text = "Some other text"
-              , title = "Another useful link"
-              , kind = ToRoute Route.Two
-              }
-            , { text = "Gallery"
+            [ { text = "Gallery"
               , title = "View the image gallery"
               , kind = ToRoute Route.Gallery
               }
@@ -111,27 +126,30 @@ init =
               }
             ]
         , loggedIn =
-            [ { text = "Administration"
-              , title = "Upload files and such"
-              , kind = ToRoute Route.Admin
-              }
-            , { text = "Logout"
-              , title = "Log out"
-              , kind = ToAction <| Message.Session LogoutMsg
-              }
-            ]
+            (\route ->
+                [ { text = "Administration"
+                  , title = "Upload files and such"
+                  , kind = ToRoute Route.Admin
+                  }
+                , { text = "Logout"
+                  , title = "Log out"
+                  , kind = ToAction <| Message.Session <| LogoutMsg route
+                  }
+                ]
+            )
         }
     , footer =
         { tmp = "copyright asonix 2018"
         }
-    , currentPage = Home Page.Home.init
+    , currentPage = Home <| Page.Home.init Nothing
+    , route = Route.Home
     }
 
 
 {-| Render a new page
 -}
-loadPage : Route -> PageModel -> ( PageModel, Cmd Msg )
-loadPage route model =
+loadPage : Route -> PageSession -> PageModel -> ( PageModel, Cmd Msg )
+loadPage route pageSession model =
     case route of
         Route.Home ->
             case model.currentPage of
@@ -139,7 +157,12 @@ loadPage route model =
                     ( model, Cmd.none )
 
                 _ ->
-                    ( { model | currentPage = Home Page.Home.init }, Cmd.none )
+                    ( { model
+                        | currentPage = Home <| Page.Home.init pageSession.home
+                        , route = route
+                      }
+                    , Cmd.none
+                    )
 
         Route.Admin ->
             case model.currentPage of
@@ -147,7 +170,12 @@ loadPage route model =
                     ( model, Cmd.none )
 
                 _ ->
-                    ( { model | currentPage = Admin Page.Admin.init }, Cmd.none )
+                    ( { model
+                        | currentPage = Admin <| Page.Admin.init pageSession.admin
+                        , route = route
+                      }
+                    , Cmd.none
+                    )
 
         Route.Gallery ->
             case model.currentPage of
@@ -155,8 +183,17 @@ loadPage route model =
                     ( model, Cmd.none )
 
                 _ ->
-                    Page.Gallery.init
-                        |> Tuple.mapFirst (\galleryModel -> { model | currentPage = Gallery galleryModel })
+                    pageSession.gallery
+                        |> Page.Gallery.init
+                        |> Tuple.mapFirst
+                            (\galleryModel ->
+                                { model
+                                    | currentPage = Gallery galleryModel
+                                    , route = route
+                                }
+                            )
+                        |> (Tuple.mapSecond (Cmd.map GalleryMsg))
+                        |> (Tuple.mapSecond (Cmd.map Page))
 
         Route.Auth ->
             case model.currentPage of
@@ -164,7 +201,12 @@ loadPage route model =
                     ( model, Cmd.none )
 
                 _ ->
-                    ( { model | currentPage = Auth Page.Auth.init }, Cmd.none )
+                    ( { model
+                        | currentPage = Auth <| Page.Auth.init pageSession.auth
+                        , route = route
+                      }
+                    , Cmd.none
+                    )
 
         Route.NotFound ->
             case model.currentPage of
@@ -172,7 +214,12 @@ loadPage route model =
                     ( model, Cmd.none )
 
                 _ ->
-                    ( { model | currentPage = NotFound Page.NotFound.init }, Cmd.none )
+                    ( { model
+                        | currentPage = NotFound <| Page.NotFound.init pageSession.notFound
+                        , route = route
+                      }
+                    , Cmd.none
+                    )
 
         _ ->
             ( model, Route.modifyUrl Route.NotFound )
@@ -180,7 +227,7 @@ loadPage route model =
 
 {-| The main application layout
 -}
-layout : Session -> PageModel -> Html Msg
+layout : Session PageSession -> PageModel -> Html Msg
 layout session model =
     div
         [ css
@@ -188,7 +235,7 @@ layout session model =
             , fontFamily sansSerif
             , color black
             , margin (px 0)
-            , padding2 (px 0) (Css.em 1)
+            , padding2 (px 0) (px 16)
             , boxSizing borderBox
             , position absolute
             , top (px 0)
@@ -203,12 +250,12 @@ layout session model =
         [ div
             [ css
                 [ maxWidth (px 900)
-                , minWidth (px 620)
+                , minWidth (px 320)
                 , margin2 (Css.em 4) auto
                 ]
             ]
             [ headerView model.header
-            , navView session model.nav
+            , navView session model.route model.nav
             , pageView session model.currentPage
             , footerView model.footer
             ]
@@ -225,33 +272,48 @@ lightShadow =
     boxShadow4 (px 0) (px 3) (px 4) grey
 
 
-pageView : Session -> PageModels -> Html Msg
+pageView : Session PageSession -> PageModels -> Html Msg
 pageView session model =
     div
         [ css
             [ backgroundColor white
             , color black
-            , padding (Css.em 2)
-            , margin2 (Css.em 2) (px 0)
+            , padding (px 32)
+            , margin2 (px 32) (px 0)
             , borderRadius (px 8)
             , lightShadow
             ]
         ]
         [ case model of
             Home homeModel ->
-                Page.Home.view homeModel
+                homeModel
+                    |> Page.Home.view
+                    |> Html.Styled.map HomeMsg
+                    |> Html.Styled.map Page
 
-            Admin oneModel ->
-                Page.Admin.view oneModel
+            Admin adminModel ->
+                adminModel
+                    |> Page.Admin.view
+                    |> Html.Styled.map AdminMsg
+                    |> Html.Styled.map Page
 
             Gallery galleryModel ->
-                Page.Gallery.view session.dimentions galleryModel
+                galleryModel
+                    |> Page.Gallery.view session.dimensions
+                    |> Html.Styled.map GalleryMsg
+                    |> Html.Styled.map Page
 
             Auth authModel ->
-                Page.Auth.view authModel
+                authModel
+                    |> Page.Auth.view
+                    |> Html.Styled.map AuthMsg
+                    |> Html.Styled.map Page
 
             NotFound notFoundModel ->
-                Page.NotFound.view notFoundModel
+                notFoundModel
+                    |> Page.NotFound.view
+                    |> Html.Styled.map NotFoundMsg
+                    |> Html.Styled.map Page
         ]
 
 
@@ -281,9 +343,17 @@ headerView link =
         ]
 
 
-navView : Session -> Nav -> Html Msg
-navView session model =
+navView : Session PageSession -> Route -> Nav -> Html Msg
+navView session route model =
     let
+        logoutRoute =
+            case route of
+                Route.Admin ->
+                    Route.Home
+
+                other ->
+                    other
+
         startIndex =
             1
 
@@ -293,11 +363,11 @@ navView session model =
 
         ( newEnd, navAuth ) =
             (case session.auth of
-                LoggedOut ->
+                Session.LoggedOut ->
                     model.loggedOut
 
-                LoggedIn ->
-                    model.loggedIn
+                Session.LoggedIn ->
+                    model.loggedIn logoutRoute
             )
                 |> addListIndex end
 
@@ -496,7 +566,7 @@ footerView model =
 
 {-| Update the state of the layout
 -}
-update : PageMessage -> Session -> PageModel -> ( ( PageModel, Cmd Msg ), Session )
+update : PageMessage -> Session PageSession -> PageModel -> ( ( PageModel, Cmd Msg ), Session PageSession )
 update msg session model =
     case msg of
         LayoutMsg layoutMsg ->
@@ -505,10 +575,26 @@ update msg session model =
         GalleryMsg galleryMsg ->
             case model.currentPage of
                 Gallery galleryModel ->
-                    galleryModel
-                        |> Page.Gallery.update galleryMsg
-                        |> Tuple.mapFirst (\x -> { model | currentPage = Gallery x })
-                        |> (\x -> ( x, session ))
+                    let
+                        ( newGalleryModel, newGalleryMsg ) =
+                            Page.Gallery.update galleryMsg galleryModel
+
+                        newModel =
+                            { model | currentPage = Gallery newGalleryModel }
+
+                        cmd =
+                            Cmd.map (Page << GalleryMsg) newGalleryMsg
+
+                        pageSession =
+                            Session.getPageSession session
+
+                        newPageSession =
+                            { pageSession | gallery = Just newGalleryModel }
+
+                        newSession =
+                            Session.setPageSession newPageSession session
+                    in
+                        ( ( newModel, cmd ), newSession )
 
                 _ ->
                     ( ( model, Cmd.none ), session )
@@ -516,9 +602,26 @@ update msg session model =
         AuthMsg authMsg ->
             case model.currentPage of
                 Auth authModel ->
-                    authModel
-                        |> Page.Auth.update authMsg session
-                        |> Tuple.mapFirst (Tuple.mapFirst (\x -> { model | currentPage = Auth x }))
+                    let
+                        ( newAuthModel, newSessionMsg ) =
+                            Page.Auth.update authMsg authModel
+
+                        newModel =
+                            { model | currentPage = Auth newAuthModel }
+
+                        cmd =
+                            Cmd.map (Message.Session) newSessionMsg
+
+                        pageSession =
+                            Session.getPageSession session
+
+                        newPageSession =
+                            { pageSession | auth = Just newAuthModel }
+
+                        newSession =
+                            Session.setPageSession newPageSession session
+                    in
+                        ( ( newModel, cmd ), newSession )
 
                 _ ->
                     ( ( model, Cmd.none ), session )
@@ -526,10 +629,29 @@ update msg session model =
         AdminMsg adminMsg ->
             case model.currentPage of
                 Admin adminModel ->
-                    adminModel
-                        |> Page.Admin.update adminMsg
-                        |> Tuple.mapFirst (\x -> { model | currentPage = Admin x })
-                        |> (\x -> ( x, session ))
+                    let
+                        ( newAdminModel, newAdminMsg ) =
+                            Page.Admin.update adminMsg adminModel
+
+                        newModel =
+                            { model | currentPage = Admin newAdminModel }
+
+                        cmd =
+                            Cmd.map (Page << AdminMsg) newAdminMsg
+
+                        pageSession =
+                            Session.getPageSession session
+
+                        newPageSession =
+                            { pageSession | admin = Just newAdminModel }
+
+                        newSession =
+                            Session.setPageSession newPageSession session
+                    in
+                        ( ( newModel, cmd ), newSession )
 
                 _ ->
                     ( ( model, Cmd.none ), session )
+
+        _ ->
+            ( ( model, Cmd.none ), session )

@@ -15,10 +15,9 @@ import Html.Styled.Events exposing (onSubmit, onInput, onClick)
 import Http
 import Json.Decode
 import Json.Encode
-import Auth exposing (..)
-import Message exposing (Msg(..), PageMessage(..), AuthMessage(..))
+import Session.Auth exposing (..)
+import Message exposing (AuthPageMessage(..), SessionMessage(..))
 import Route exposing (Route(..))
-import Session exposing (Session, SessionAuth(..))
 
 
 {-| The state for the Auth Page
@@ -37,17 +36,22 @@ type AuthType
 
 {-| Initial state for the auth page
 -}
-init : AuthModel
-init =
-    { authType = LogIn
-    , username = ""
-    , password = ""
-    }
+init : Maybe AuthModel -> AuthModel
+init model =
+    case model of
+        Just model ->
+            model
+
+        Nothing ->
+            { authType = LogIn
+            , username = ""
+            , password = ""
+            }
 
 
 {-| Rendering the Auth Page
 -}
-view : AuthModel -> Html Msg
+view : AuthModel -> Html AuthPageMessage
 view model =
     section []
         [ article []
@@ -70,7 +74,7 @@ view model =
                     , input
                         [ type_ "text"
                         , name "username"
-                        , onInput (Page << AuthMsg << Username)
+                        , onInput (Username)
                         ]
                         []
                     ]
@@ -83,7 +87,7 @@ view model =
                     , input
                         [ type_ "password"
                         , name "password"
-                        , onInput (Page << AuthMsg << Password)
+                        , onInput (Password)
                         ]
                         []
                     ]
@@ -115,7 +119,7 @@ view model =
                     [ type_ "button"
                     , name "switch"
                     , value "Switch!"
-                    , onClick (Page <| AuthMsg <| SwitchAuth)
+                    , onClick (SwitchAuth)
                     ]
                     []
                 ]
@@ -123,43 +127,37 @@ view model =
         ]
 
 
-formOnSubmit : AuthType -> Attribute Msg
+formOnSubmit : AuthType -> Attribute AuthPageMessage
 formOnSubmit authType =
     let
         msg =
             case authType of
                 SignUp ->
-                    Page <| AuthMsg <| Signup
+                    Signup
 
                 LogIn ->
-                    Page <| AuthMsg <| Login
+                    Login
     in
         onSubmit msg
 
 
-update : AuthMessage -> Session -> AuthModel -> ( ( AuthModel, Cmd Msg ), Session )
-update msg session model =
+update : AuthPageMessage -> AuthModel -> ( AuthModel, Cmd SessionMessage )
+update msg model =
     case msg of
         Login ->
-            ( ( model, authRequest loginUrl (newAuthParams model.username model.password) ), session )
+            ( model, authRequest Route.Home loginUrl (newAuthParams model.username model.password) )
 
         Signup ->
-            ( ( model, authRequest signupUrl (newAuthParams model.username model.password) ), session )
+            ( model, authRequest Route.Home signupUrl (newAuthParams model.username model.password) )
 
         Username username ->
-            ( ( { model | username = username }, Cmd.none ), session )
+            ( { model | username = username }, Cmd.none )
 
         Password password ->
-            ( ( { model | password = password }, Cmd.none ), session )
-
-        Authenticated ->
-            ( ( model, Route.modifyUrl Home ), { session | auth = LoggedIn } )
-
-        NotAuthenticated ->
-            ( ( model, Cmd.none ), { session | auth = LoggedOut } )
+            ( { model | password = password }, Cmd.none )
 
         SwitchAuth ->
-            ( ( switchAuth model, Cmd.none ), session )
+            ( switchAuth model, Cmd.none )
 
 
 switchAuth : AuthModel -> AuthModel

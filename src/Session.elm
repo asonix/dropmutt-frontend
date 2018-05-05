@@ -1,14 +1,16 @@
-module Session exposing (Session, SessionAuth(..), init, update)
+module Session exposing (Session, SessionAuth(..), init, update, setPageSession, getPageSession)
 
 import Task
 import Window
-import Auth exposing (logoutRequest, checkAuth)
+import Session.Auth exposing (logoutRequest, checkAuth)
 import Message exposing (Msg(..), SessionMessage(..))
+import Route
 
 
-type alias Session =
+type alias Session pageSession =
     { auth : SessionAuth
-    , dimentions : Window.Size
+    , dimensions : Window.Size
+    , pageSession : pageSession
     }
 
 
@@ -17,43 +19,70 @@ type SessionAuth
     | LoggedIn
 
 
-init : ( Session, Cmd Msg )
-init =
+init : pageSession -> ( Session pageSession, Cmd SessionMessage )
+init pageSession =
     ( { auth = LoggedOut
-      , dimentions =
+      , dimensions =
             { width = 0
             , height = 0
             }
+      , pageSession = pageSession
       }
     , Cmd.batch [ checkAuth, getSize ]
     )
 
 
-getSize : Cmd Msg
+getSize : Cmd SessionMessage
 getSize =
     let
         handleResponse response =
             case response of
                 Ok size ->
-                    Message.Session <| Resize size
+                    Resize size
 
                 Err a ->
-                    Message.Session NoSize
+                    NoSize
     in
         Task.attempt handleResponse Window.size
 
 
-update : SessionMessage -> Session -> ( Session, Cmd Msg )
+setPageSession : pageSession -> Session pageSession -> Session pageSession
+setPageSession pageSession session =
+    { session | pageSession = pageSession }
+
+
+getPageSession : Session pageSession -> pageSession
+getPageSession session =
+    session.pageSession
+
+
+update : SessionMessage -> Session pageSession -> ( Session pageSession, Cmd Msg )
 update msg model =
-    case msg of
-        LogoutMsg ->
-            ( { model | auth = LoggedOut }, logoutRequest )
+    let
+        ( newModel, newMsg ) =
+            case msg of
+                LogoutMsg route ->
+                    ( model, Cmd.map Message.Session (logoutRequest route) )
 
-        LoginMsg ->
-            ( { model | auth = LoggedIn }, Cmd.none )
+                LoginMsg ->
+                    ( model, Cmd.none )
 
-        Resize size ->
-            ( { model | dimentions = size }, Cmd.none )
+                Resize size ->
+                    ( { model | dimensions = size }, Cmd.none )
 
-        NoSize ->
-            ( model, getSize )
+                NoSize ->
+                    ( model, Cmd.map Message.Session getSize )
+
+                Message.LoggedIn route ->
+                    ( { model | auth = LoggedIn }, Route.modifyUrl route )
+
+                LoggedInNoRedirect ->
+                    ( { model | auth = LoggedIn }, Cmd.none )
+
+                Message.LoggedOut route ->
+                    ( { model | auth = LoggedOut }, Route.modifyUrl route )
+
+                LoggedOutNoRedirect ->
+                    ( { model | auth = LoggedOut }, Cmd.none )
+    in
+        ( newModel, newMsg )

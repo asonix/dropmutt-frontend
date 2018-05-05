@@ -1,9 +1,10 @@
-module Auth exposing (AuthParams, Method(..), newAuthParams, logoutUrl, logoutRequest, apiEndpoint, loginUrl, signupUrl, authRequest, authPayload, checkAuth, methodToString)
+module Session.Auth exposing (..)
 
 import Http
 import Json.Decode
 import Json.Encode
-import Message exposing (Msg(..), PageMessage(..), AuthMessage(..), SessionMessage(..))
+import Message exposing (SessionMessage(..))
+import Route exposing (Route)
 
 
 type alias AuthParams =
@@ -98,31 +99,31 @@ cookieRequest method url body decoder =
         }
 
 
-logoutRequest : Cmd Msg
-logoutRequest =
+logoutRequest : Route -> Cmd SessionMessage
+logoutRequest route =
     let
         handleResponse res =
             case res of
                 Ok a ->
-                    Page <| AuthMsg <| NotAuthenticated
+                    LoggedOut route
 
                 Err e ->
-                    Page <| AuthMsg <| Authenticated
+                    LoggedInNoRedirect
     in
         cookieDelete logoutUrl (Json.Decode.succeed 0)
             |> Http.send handleResponse
 
 
-checkAuth : Cmd Msg
+checkAuth : Cmd SessionMessage
 checkAuth =
     let
         handleResponse res =
             case res of
                 Ok a ->
-                    Session LoginMsg
+                    LoggedInNoRedirect
 
                 Err error ->
-                    Session LogoutMsg
+                    LoggedOutNoRedirect
     in
         cookieRequest GET checkAuthUrl Http.emptyBody (Json.Decode.succeed 0)
             |> Http.send handleResponse
@@ -137,8 +138,8 @@ authPayload model =
         |> Http.jsonBody
 
 
-authRequest : String -> AuthParams -> Cmd Msg
-authRequest url model =
+authRequest : Route -> String -> AuthParams -> Cmd SessionMessage
+authRequest route url model =
     let
         body =
             authPayload model
@@ -149,11 +150,9 @@ authRequest url model =
         handleResponse res =
             case res of
                 Ok a ->
-                    Page <| AuthMsg <| Authenticated
+                    LoggedIn route
 
                 Err error ->
-                    Page <|
-                        AuthMsg <|
-                            NotAuthenticated
+                    LoggedOutNoRedirect
     in
         Http.send handleResponse request

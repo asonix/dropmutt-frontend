@@ -10,7 +10,7 @@ module Page.NotFound exposing (NotFoundModel, init, view)
 import Css exposing (..)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css)
-import Message exposing (Msg)
+import Message exposing (NotFoundMessage)
 
 
 {-| The state for the NotFound Page
@@ -22,15 +22,20 @@ type alias NotFoundModel =
 
 {-| Initial state for the notFound page
 -}
-init : NotFoundModel
-init =
-    { tmp = "Not found"
-    }
+init : Maybe NotFoundModel -> NotFoundModel
+init model =
+    case model of
+        Just model ->
+            model
+
+        Nothing ->
+            { tmp = "Not found"
+            }
 
 
 {-| Rendering the NotFound Page
 -}
-view : NotFoundModel -> Html Msg
+view : NotFoundModel -> Html NotFoundMessage
 view model =
     section []
         [ article []

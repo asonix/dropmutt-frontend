@@ -18,7 +18,7 @@ import Model exposing (Model)
 import Ports exposing (..)
 import Route exposing (Route)
 import Session exposing (Session)
-import View
+import Page
 
 
 -- MAIN
@@ -59,7 +59,7 @@ init location =
 view : Model -> Html Msg
 view model =
     model.page
-        |> View.layout model.session
+        |> Page.layout model.session
         |> Html.Styled.toUnstyled
 
 
@@ -77,7 +77,7 @@ update msg model =
             ( model, Route.modifyUrl route )
 
         Page msg ->
-            View.update msg model.session model.page
+            Page.update msg model.session model.page
                 |> (\( ( page, cmd ), session ) -> ( { model | page = page, session = session }, cmd ))
 
         Session msg ->

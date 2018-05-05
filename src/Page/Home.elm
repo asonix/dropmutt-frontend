@@ -10,7 +10,7 @@ module Page.Home exposing (HomeModel, init, view)
 import Css exposing (..)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css)
-import Message exposing (Msg)
+import Message exposing (HomeMessage)
 
 
 {-| The state for the Home Page
@@ -22,15 +22,20 @@ type alias HomeModel =
 
 {-| Initial state for the home page
 -}
-init : HomeModel
-init =
-    { tmp = "Page Home"
-    }
+init : Maybe HomeModel -> HomeModel
+init model =
+    case model of
+        Just model ->
+            model
+
+        Nothing ->
+            { tmp = "Page Home"
+            }
 
 
 {-| Rendering the Home Page
 -}
-view : HomeModel -> Html Msg
+view : HomeModel -> Html HomeMessage
 view model =
     section []
         [ article []

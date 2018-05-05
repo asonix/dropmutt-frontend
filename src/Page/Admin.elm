@@ -12,8 +12,8 @@ import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (accept, action, css, for, id, method, name, type_, value)
 import Html.Styled.Events exposing (on, onSubmit)
 import Json.Decode
-import Auth exposing (Method(..), apiEndpoint, methodToString)
-import Message exposing (Msg(..), PageMessage(..), AdminMessage(..))
+import Session.Auth exposing (Method(..), apiEndpoint)
+import Message exposing (AdminMessage(..))
 import Ports exposing (performUpload)
 
 
@@ -36,11 +36,16 @@ type UploadState
 
 {-| Initial state for the admin page
 -}
-init : AdminModel
-init =
-    { galleryName = "ref-sheets"
-    , uploadState = NotStarted
-    }
+init : Maybe AdminModel -> AdminModel
+init model =
+    case model of
+        Just model ->
+            model
+
+        Nothing ->
+            { galleryName = "ref-sheets"
+            , uploadState = NotStarted
+            }
 
 
 uploadUrl : String
@@ -55,7 +60,7 @@ formId =
 
 {-| Rendering the Admin Page
 -}
-view : AdminModel -> Html Msg
+view : AdminModel -> Html AdminMessage
 view model =
     section []
         [ article []
@@ -145,12 +150,12 @@ view model =
         ]
 
 
-formOnSubmit : Attribute Msg
+formOnSubmit : Attribute AdminMessage
 formOnSubmit =
-    onSubmit <| Page <| AdminMsg <| PerformUpload
+    onSubmit PerformUpload
 
 
-update : AdminMessage -> AdminModel -> ( AdminModel, Cmd Msg )
+update : AdminMessage -> AdminModel -> ( AdminModel, Cmd AdminMessage )
 update msg model =
     case msg of
         PerformUpload ->

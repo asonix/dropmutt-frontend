@@ -11,14 +11,14 @@ module Model exposing (Model, init, loadPage)
 import Message exposing (Msg)
 import Route exposing (Route)
 import Session exposing (Session, SessionAuth(..))
-import View exposing (PageModel)
+import Page exposing (PageModel, PageSession)
 
 
 {-| The model shared between all pages
 -}
 type alias Model =
     { page : PageModel
-    , session : Session
+    , session : Session PageSession
     }
 
 
@@ -26,13 +26,15 @@ type alias Model =
 -}
 init : ( Model, Cmd Msg )
 init =
-    Session.init
+    Page.initPageSession
+        |> Session.init
         |> Tuple.mapFirst
             (\session ->
-                { page = View.init
+                { page = Page.init
                 , session = session
                 }
             )
+        |> Tuple.mapSecond (Cmd.map Message.Session)
 
 
 {-| Load a new page
@@ -40,5 +42,5 @@ init =
 loadPage : Route -> Model -> ( Model, Cmd Msg )
 loadPage route model =
     model.page
-        |> View.loadPage route
+        |> Page.loadPage route (Session.getPageSession model.session)
         |> Tuple.mapFirst (\page -> { model | page = page })
