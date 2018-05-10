@@ -11,13 +11,13 @@ module Model exposing (Model, init, loadPage)
 import Message exposing (Msg)
 import Route exposing (Route)
 import Session exposing (Session, SessionAuth(..))
-import Page exposing (PageModel, PageSession)
+import Page exposing (Page, PageSession)
 
 
 {-| The model shared between all pages
 -}
 type alias Model =
-    { page : PageModel
+    { page : Page
     , session : Session PageSession
     }
 

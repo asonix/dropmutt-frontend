@@ -14,10 +14,10 @@ import Html.Styled.Events exposing (onWithOptions)
 import Http
 import Json.Decode exposing (Decoder)
 import Window exposing (Size)
-import Session.Auth exposing (apiEndpoint)
 import Colors exposing (..)
 import Message exposing (GalleryMessage(..))
 import Page.Galleries.Gallery.RemoteImage exposing (..)
+import Session.Auth exposing (apiEndpoint)
 
 
 {-| The state for the Gallery Page
@@ -25,13 +25,14 @@ import Page.Galleries.Gallery.RemoteImage exposing (..)
 type alias Gallery =
     { currentImage : Maybe RemoteImage
     , remotes : List RemoteImage
+    , name : String
     }
 
 
 {-| Initial state for the gallery page
 -}
-init : Maybe Gallery -> ( Gallery, Cmd GalleryMessage )
-init model =
+init : String -> Maybe Gallery -> ( Gallery, Cmd GalleryMessage )
+init name model =
     case model of
         Just model ->
             ( model, Cmd.none )
@@ -39,23 +40,24 @@ init model =
         Nothing ->
             ( { currentImage = Nothing
               , remotes = []
+              , name = name
               }
-            , imageRequest 15 Nothing
+            , imageRequest name 15 Nothing
             )
 
 
-galleryEndpoint : Int -> Maybe Int -> String
-galleryEndpoint count before =
+galleryEndpoint : String -> Int -> Maybe Int -> String
+galleryEndpoint gallery count before =
     case before of
         Just b ->
-            apiEndpoint ++ "/images?count=" ++ (toString count) ++ "&id=" ++ (toString before)
+            apiEndpoint ++ "/galleries/" ++ gallery ++ "?count=" ++ (toString count) ++ "&id=" ++ (toString before)
 
         Nothing ->
-            apiEndpoint ++ "/images?count=" ++ (toString count)
+            apiEndpoint ++ "/galleries/" ++ gallery ++ "?count=" ++ (toString count)
 
 
-imageRequest : Int -> Maybe Int -> Cmd GalleryMessage
-imageRequest count before =
+imageRequest : String -> Int -> Maybe Int -> Cmd GalleryMessage
+imageRequest gallery count before =
     let
         handleResponse res =
             case res of
@@ -65,7 +67,7 @@ imageRequest count before =
                 Err e ->
                     NoImages
     in
-        Http.get (galleryEndpoint count before) (Json.Decode.list decodeRemoteImage)
+        Http.get (galleryEndpoint gallery count before) (Json.Decode.list decodeRemoteImage)
             |> Http.send handleResponse
 
 
@@ -251,8 +253,8 @@ previewImage image =
                                 [ div
                                     [ css [ overflow hidden ] ]
                                     [ img
-                                        [ src <| Page.Gallery.RemoteImage.asUrl remoteImage
-                                        , title <| Page.Gallery.RemoteImage.alternateText image
+                                        [ src <| Page.Galleries.Gallery.RemoteImage.asUrl remoteImage
+                                        , title <| Page.Galleries.Gallery.RemoteImage.alternateText image
                                         , if remoteImage.width > remoteImage.height then
                                             css
                                                 [ width <| px 200

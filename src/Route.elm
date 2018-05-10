@@ -37,15 +37,50 @@ type alias Gallery =
     }
 
 
+galleries : Parser (Route -> a) a
+galleries =
+    UrlParser.map (Galleries Nothing) (UrlParser.s "galleries")
+
+
+rawGallery : Parser (String -> a) a
+rawGallery =
+    UrlParser.s "galleries" </> string
+
+
+gallery : Parser (Gallery -> a) a
+gallery =
+    UrlParser.map (flip Gallery <| Nothing) rawGallery
+
+
+routeGallery : Parser (Route -> a) a
+routeGallery =
+    UrlParser.map (Galleries << Just) gallery
+
+
+rawImage : Parser (String -> Maybe String -> a) a
+rawImage =
+    UrlParser.s "galleries" </> string </> UrlParser.map Just string
+
+
+image : Parser (Gallery -> a) a
+image =
+    UrlParser.map Gallery rawImage
+
+
+routeImage : Parser (Route -> a) a
+routeImage =
+    UrlParser.map (Galleries << Just) image
+
+
 route : Parser (Route -> a) a
 route =
     oneOf
         [ UrlParser.map Home (UrlParser.s "")
         , UrlParser.map Admin (UrlParser.s "admin")
         , UrlParser.map Two (UrlParser.s "two")
-        , UrlParser.map (Galleries (Maybe Gallery)) (UrlParser.s "galleries")
-        , UrlParser.map (Galleries (Maybe Gallery)) (UrlParser.s "galleries" </> string)
-        , UrlParser.map (Galleries (Maybe Gallery)) (UrlParser.s "galleries" </> string </> string)
+        , galleries
+        , routeGallery
+        , routeImage
         , UrlParser.map Auth (UrlParser.s "auth")
         , UrlParser.map NotFound (UrlParser.s "404")
         ]

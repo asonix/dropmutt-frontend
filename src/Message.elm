@@ -1,4 +1,4 @@
-module Message exposing (Msg(..), AdminMessage(..), AuthPageMessage(..), PageMessage(..), LayoutMessage(..), GalleryMessage(..), SessionMessage(..), HomeMessage(..), NotFoundMessage(..))
+module Message exposing (Msg(..), AdminMessage(..), AuthPageMessage(..), PageMessage(..), LayoutMessage(..), GalleriesMessage(..), GalleryMessage(..), SessionMessage(..), HomeMessage(..), NotFoundMessage(..))
 
 {-| Define the Msg type and related methods
 
@@ -77,6 +77,8 @@ type LayoutMessage
 type GalleriesMessage
     = GalleryMsg GalleryMessage
     | Select String
+    | Galleries (List String)
+    | NoGalleries
 
 
 {-| The Msg type for the Image gallery

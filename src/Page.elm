@@ -53,7 +53,7 @@ type Pages
 type alias PageSession =
     { home : Maybe Home
     , admin : Maybe Admin
-    , gallery : Maybe Galleries
+    , galleries : Maybe Galleries
     , auth : Maybe Auth
     , notFound : Maybe NotFound
     }
@@ -63,7 +63,7 @@ initPageSession : PageSession
 initPageSession =
     { home = Nothing
     , admin = Nothing
-    , gallery = Nothing
+    , galleries = Nothing
     , auth = Nothing
     , notFound = Nothing
     }
@@ -115,8 +115,8 @@ init =
     , nav =
         { nav =
             [ { text = "Galleries"
-              , title = "View the image gallery"
-              , kind = ToRoute Route.GalleriesList
+              , title = "View the image galleries"
+              , kind = ToRoute <| Route.Galleries Nothing
               }
             ]
         , loggedOut =
@@ -177,23 +177,17 @@ loadPage route pageSession model =
                     , Cmd.none
                     )
 
-        Route.Galleries name ->
-            case model.currentPage of
-                Galleries _ ->
-                    ( model, Cmd.none )
-
-                _ ->
-                    pageSession.gallery
-                        |> Page.GalleriesList.Galleries.init
-                        |> Tuple.mapFirst
-                            (\galleryModel ->
-                                { model
-                                    | currentPage = Galleries galleryModel
-                                    , route = route
-                                }
-                            )
-                        |> (Tuple.mapSecond (Cmd.map GalleriesMsg))
-                        |> (Tuple.mapSecond (Cmd.map Page))
+        Route.Galleries galleriesRoute ->
+            pageSession.galleries
+                |> Page.Galleries.loadPage galleriesRoute
+                |> Tuple.mapFirst
+                    (\galleryModel ->
+                        { model
+                            | currentPage = Galleries galleryModel
+                            , route = route
+                        }
+                    )
+                |> (Tuple.mapSecond (Cmd.map (Message.Page << Message.GalleriesMsg)))
 
         Route.Auth ->
             case model.currentPage of
@@ -288,32 +282,27 @@ pageView session model =
             Home homeModel ->
                 homeModel
                     |> Page.Home.view
-                    |> Html.Styled.map HomeMsg
-                    |> Html.Styled.map Page
+                    |> Html.Styled.map (Message.Page << HomeMsg)
 
             Admin adminModel ->
                 adminModel
                     |> Page.Admin.view
-                    |> Html.Styled.map AdminMsg
-                    |> Html.Styled.map Page
+                    |> Html.Styled.map (Message.Page << AdminMsg)
 
             Galleries galleryModel ->
                 galleryModel
                     |> Page.Galleries.view session.dimensions
-                    |> Html.Styled.map GalleriesMsg
-                    |> Html.Styled.map Page
+                    |> Html.Styled.map (Message.Page << GalleriesMsg)
 
             Auth authModel ->
                 authModel
                     |> Page.Auth.view
-                    |> Html.Styled.map AuthMsg
-                    |> Html.Styled.map Page
+                    |> Html.Styled.map (Message.Page << AuthMsg)
 
             NotFound notFoundModel ->
                 notFoundModel
                     |> Page.NotFound.view
-                    |> Html.Styled.map NotFoundMsg
-                    |> Html.Styled.map Page
+                    |> Html.Styled.map (Message.Page << NotFoundMsg)
         ]
 
 
@@ -583,13 +572,13 @@ update msg session model =
                             { model | currentPage = Galleries newGalleries }
 
                         cmd =
-                            Cmd.map (Page << GalleriesMsg) newGalleriesMsg
+                            Cmd.map (Message.Page << GalleriesMsg) newGalleriesMsg
 
                         pageSession =
                             Session.getPageSession session
 
                         newPageSession =
-                            { pageSession | gallery = Just newGalleries }
+                            { pageSession | galleries = Just newGalleries }
 
                         newSession =
                             Session.setPageSession newPageSession session
@@ -637,7 +626,7 @@ update msg session model =
                             { model | currentPage = Admin newAdmin }
 
                         cmd =
-                            Cmd.map (Page << AdminMsg) newAdminMsg
+                            Cmd.map (Message.Page << AdminMsg) newAdminMsg
 
                         pageSession =
                             Session.getPageSession session
