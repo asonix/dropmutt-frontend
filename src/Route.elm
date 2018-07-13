@@ -24,7 +24,6 @@ import UrlParser exposing (Parser, (</>), oneOf, parseHash, string, int)
 -}
 type Route
     = Home
-    | Admin
     | Two
     | Galleries (Maybe Gallery)
     | Auth
@@ -33,54 +32,52 @@ type Route
 
 type alias Gallery =
     { name : String
-    , image : Maybe String
+    , subpage : Maybe GallerySubPage
     }
+
+
+type GallerySubPage
+    = Image String
+    | Edit
+    | Add
 
 
 galleries : Parser (Route -> a) a
 galleries =
-    UrlParser.map (Galleries Nothing) (UrlParser.s "galleries")
-
-
-rawGallery : Parser (String -> a) a
-rawGallery =
-    UrlParser.s "galleries" </> string
+    oneOf
+        [ UrlParser.map (Galleries Nothing) (UrlParser.s "galleries")
+        , UrlParser.map (Galleries << Just) gallery
+        ]
 
 
 gallery : Parser (Gallery -> a) a
 gallery =
-    UrlParser.map (flip Gallery <| Nothing) rawGallery
+    oneOf
+        [ UrlParser.map (flip Gallery Nothing) (UrlParser.s "galleries" </> string)
+        , UrlParser.map Gallery (UrlParser.s "galleries" </> string </> UrlParser.map Just gallerySubPage)
+        ]
 
 
-routeGallery : Parser (Route -> a) a
-routeGallery =
-    UrlParser.map (Galleries << Just) gallery
+rawGalleryImage : Parser (String -> a) a
+rawGalleryImage =
+    UrlParser.s "image" </> string
 
 
-rawImage : Parser (String -> Maybe String -> a) a
-rawImage =
-    UrlParser.s "galleries" </> string </> UrlParser.map Just string
-
-
-image : Parser (Gallery -> a) a
-image =
-    UrlParser.map Gallery rawImage
-
-
-routeImage : Parser (Route -> a) a
-routeImage =
-    UrlParser.map (Galleries << Just) image
+gallerySubPage : Parser (GallerySubPage -> a) a
+gallerySubPage =
+    oneOf
+        [ UrlParser.map Image rawGalleryImage
+        , UrlParser.map Edit (UrlParser.s "edit")
+        , UrlParser.map Add (UrlParser.s "upload")
+        ]
 
 
 route : Parser (Route -> a) a
 route =
     oneOf
         [ UrlParser.map Home (UrlParser.s "")
-        , UrlParser.map Admin (UrlParser.s "admin")
         , UrlParser.map Two (UrlParser.s "two")
         , galleries
-        , routeGallery
-        , routeImage
         , UrlParser.map Auth (UrlParser.s "auth")
         , UrlParser.map NotFound (UrlParser.s "404")
         ]
@@ -94,18 +91,23 @@ routeToString route =
                 Home ->
                     []
 
-                Admin ->
-                    [ "admin" ]
-
                 Two ->
                     [ "two" ]
 
                 Galleries gallery ->
                     case gallery of
                         Just gallery ->
-                            case gallery.image of
-                                Just image ->
-                                    [ "galleries", gallery.name, image ]
+                            case gallery.subpage of
+                                Just subpage ->
+                                    case subpage of
+                                        Image image ->
+                                            [ "galleries", gallery.name, "image", image ]
+
+                                        Edit ->
+                                            [ "galleries", gallery.name, "edit" ]
+
+                                        Add ->
+                                            [ "galleries", gallery.name, "upload" ]
 
                                 Nothing ->
                                     [ "galleries", gallery.name ]

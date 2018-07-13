@@ -132,7 +132,7 @@ renderGalleryName name =
     a
         [ Route.href <|
             Route.Galleries <|
-                Just { name = name, image = Nothing }
+                Just { name = name, subpage = Nothing }
         , css [ display block ]
         ]
         [ div [] [ text name ] ]

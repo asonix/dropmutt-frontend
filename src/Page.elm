@@ -21,7 +21,6 @@ import Task exposing (perform)
 import Colors exposing (..)
 import Message exposing (Msg(..), PageMessage(..), LayoutMessage(..), GalleriesMessage(..), SessionMessage(..))
 import Page.Home exposing (Home)
-import Page.Admin exposing (Admin)
 import Page.Galleries exposing (Galleries)
 import Page.Auth exposing (Auth)
 import Page.NotFound exposing (NotFound)
@@ -44,7 +43,6 @@ type alias Page =
 -}
 type Pages
     = Home Home
-    | Admin Admin
     | Galleries Galleries
     | Auth Auth
     | NotFound NotFound
@@ -52,7 +50,6 @@ type Pages
 
 type alias PageSession =
     { home : Maybe Home
-    , admin : Maybe Admin
     , galleries : Maybe Galleries
     , auth : Maybe Auth
     , notFound : Maybe NotFound
@@ -62,7 +59,6 @@ type alias PageSession =
 initPageSession : PageSession
 initPageSession =
     { home = Nothing
-    , admin = Nothing
     , galleries = Nothing
     , auth = Nothing
     , notFound = Nothing
@@ -127,11 +123,7 @@ init =
             ]
         , loggedIn =
             (\route ->
-                [ { text = "Administration"
-                  , title = "Upload files and such"
-                  , kind = ToRoute Route.Admin
-                  }
-                , { text = "Logout"
+                [ { text = "Logout"
                   , title = "Log out"
                   , kind = ToAction <| Message.Session <| LogoutMsg route
                   }
@@ -159,19 +151,6 @@ loadPage route pageSession model =
                 _ ->
                     ( { model
                         | currentPage = Home <| Page.Home.init pageSession.home
-                        , route = route
-                      }
-                    , Cmd.none
-                    )
-
-        Route.Admin ->
-            case model.currentPage of
-                Admin _ ->
-                    ( model, Cmd.none )
-
-                _ ->
-                    ( { model
-                        | currentPage = Admin <| Page.Admin.init pageSession.admin
                         , route = route
                       }
                     , Cmd.none
@@ -284,11 +263,6 @@ pageView session model =
                     |> Page.Home.view
                     |> Html.Styled.map (Message.Page << HomeMsg)
 
-            Admin adminModel ->
-                adminModel
-                    |> Page.Admin.view
-                    |> Html.Styled.map (Message.Page << AdminMsg)
-
             Galleries galleryModel ->
                 galleryModel
                     |> Page.Galleries.view session.dimensions
@@ -336,12 +310,7 @@ navView : Session PageSession -> Route -> Nav -> Html Msg
 navView session route model =
     let
         logoutRoute =
-            case route of
-                Route.Admin ->
-                    Route.Home
-
-                other ->
-                    other
+            route
 
         startIndex =
             1
@@ -427,9 +396,7 @@ linkKindAttribute : LinkKind -> List (Attribute Msg)
 linkKindAttribute kind =
     case kind of
         ToRoute route ->
-            [ Route.href route
-            , navLinkOnClick route
-            ]
+            [ Route.href route ]
 
         ToAction action ->
             [ Html.Styled.Attributes.href "#"
@@ -483,16 +450,6 @@ actionLinkOnClick action =
         , preventDefault = True
         }
         (Json.Decode.succeed <| action)
-
-
-navLinkOnClick : Route -> Attribute Msg
-navLinkOnClick route =
-    onWithOptions
-        "click"
-        { stopPropagation = False
-        , preventDefault = True
-        }
-        (Json.Decode.succeed <| Load route)
 
 
 navHover : List Style
@@ -606,33 +563,6 @@ update msg session model =
 
                         newPageSession =
                             { pageSession | auth = Just newAuth }
-
-                        newSession =
-                            Session.setPageSession newPageSession session
-                    in
-                        ( ( newModel, cmd ), newSession )
-
-                _ ->
-                    ( ( model, Cmd.none ), session )
-
-        AdminMsg adminMsg ->
-            case model.currentPage of
-                Admin adminModel ->
-                    let
-                        ( newAdmin, newAdminMsg ) =
-                            Page.Admin.update adminMsg adminModel
-
-                        newModel =
-                            { model | currentPage = Admin newAdmin }
-
-                        cmd =
-                            Cmd.map (Message.Page << AdminMsg) newAdminMsg
-
-                        pageSession =
-                            Session.getPageSession session
-
-                        newPageSession =
-                            { pageSession | admin = Just newAdmin }
 
                         newSession =
                             Session.setPageSession newPageSession session

@@ -13,7 +13,7 @@ import Html exposing (Html)
 import Html.Styled
 import Navigation exposing (Location, program)
 import Window
-import Message exposing (Msg(..), PageMessage(..), AdminMessage(..), SessionMessage(..))
+import Message exposing (Msg(..), PageMessage(..), SessionMessage(..))
 import Model exposing (Model)
 import Ports exposing (..)
 import Route exposing (Route)
@@ -92,9 +92,5 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ uploadPercentage (Page << AdminMsg << UploadPercentage)
-        , uploadFailed (Page << AdminMsg << UploadFailed)
-        , uploadSucceeded (Page << AdminMsg << UploadSucceeded)
-        , uploadProcessing (Page << AdminMsg << UploadProcessing)
-        , Window.resizes (Message.Session << Resize)
+        [ Window.resizes (Message.Session << Resize)
         ]

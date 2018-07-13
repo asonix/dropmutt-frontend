@@ -104,7 +104,10 @@ view screenSize model =
     in
         section []
             [ article []
-                [ previewList contentWidth model.remotes
+                [ a
+                    [ href "#/galleries" ]
+                    [ div [] [ text "Back to galleries" ] ]
+                , previewList contentWidth model.remotes
                 ]
             , case model.currentImage of
                 Just image ->

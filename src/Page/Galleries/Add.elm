@@ -1,8 +1,8 @@
-module Page.Admin exposing (Admin, init, view, update)
+module Page.Galleries.Add exposing (Add, init, view, update)
 
 {-| Defines the admin page
 
-    @docs Admin
+    @docs Add
     @docs init
 
 -}
@@ -13,13 +13,13 @@ import Html.Styled.Attributes exposing (accept, action, css, for, id, method, na
 import Html.Styled.Events exposing (on, onSubmit)
 import Json.Decode
 import Session.Auth exposing (Method(..), apiEndpoint)
-import Message exposing (AdminMessage(..))
+import Message exposing (AddMessage(..))
 import Ports exposing (performUpload)
 
 
-{-| The state for the Admin Page
+{-| The state for the Add Page
 -}
-type alias Admin =
+type alias Add =
     { galleryName : String
     , uploadState : UploadState
     }
@@ -36,7 +36,7 @@ type UploadState
 
 {-| Initial state for the admin page
 -}
-init : Maybe Admin -> Admin
+init : Maybe Add -> Add
 init model =
     case model of
         Just model ->
@@ -58,9 +58,9 @@ formId =
     "upload-form"
 
 
-{-| Rendering the Admin Page
+{-| Rendering the Add Page
 -}
-view : Admin -> Html AdminMessage
+view : Add -> Html AddMessage
 view model =
     section []
         [ article []
@@ -150,12 +150,12 @@ view model =
         ]
 
 
-formOnSubmit : Attribute AdminMessage
+formOnSubmit : Attribute AddMessage
 formOnSubmit =
     onSubmit PerformUpload
 
 
-update : AdminMessage -> Admin -> ( Admin, Cmd AdminMessage )
+update : AddMessage -> Add -> ( Add, Cmd AddMessage )
 update msg model =
     case msg of
         PerformUpload ->

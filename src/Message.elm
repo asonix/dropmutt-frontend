@@ -1,4 +1,4 @@
-module Message exposing (Msg(..), AdminMessage(..), AuthPageMessage(..), PageMessage(..), LayoutMessage(..), GalleriesMessage(..), GalleryMessage(..), SessionMessage(..), HomeMessage(..), NotFoundMessage(..))
+module Message exposing (Msg(..), AuthPageMessage(..), PageMessage(..), LayoutMessage(..), GalleriesMessage(..), GalleryMessage(..), SessionMessage(..), HomeMessage(..), NotFoundMessage(..))
 
 {-| Define the Msg type and related methods
 
@@ -37,7 +37,6 @@ type PageMessage
     = LayoutMsg LayoutMessage
     | GalleriesMsg GalleriesMessage
     | AuthMsg AuthPageMessage
-    | AdminMsg AdminMessage
     | HomeMsg HomeMessage
     | NotFoundMsg NotFoundMessage
 
